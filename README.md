@@ -1,3 +1,8 @@
+[![Build Status][ci-img]][ci-url]
+[![Code Coverage][cov-img]][cov-url]
+[![Code Climate][clim-img]][clim-url]
+[![NPM][npm-img]][npm-url]
+
 # Karma - A heuristics based reputation engine for the Haraka MTA
 
 Karma is a heuristic scoring engine that uses connection metadata and other Haraka plugin data as inputs. Connections scoring in excess of specified thresholds are rewarded or [penalized](#penalties) in proportionate ways.
@@ -194,3 +199,13 @@ Expect to use karma *with* content filters.
 [sa-url]: http://haraka.github.io/manual/plugins/spamassassin.html
 [snf-url]: http://haraka.github.io/manual/plugins/messagesniffer.html
 [results-url]: http://haraka.github.io/manual/Results.html
+
+
+[ci-img]: https://travis-ci.org/haraka/haraka-plugin-karma.svg
+[ci-url]: https://travis-ci.org/haraka/haraka-plugin-karma
+[cov-img]: https://codecov.io/github/haraka/haraka-plugin-karma/coverage.svg
+[cov-url]: https://codecov.io/github/haraka/haraka-plugin-karma
+[clim-img]: https://codeclimate.com/github/haraka/haraka-plugin-karma/badges/gpa.svg
+[clim-url]: https://codeclimate.com/github/haraka/haraka-plugin-karma
+[npm-img]: https://nodei.co/npm/haraka-plugin-karma.png
+[npm-url]: https://www.npmjs.com/package/haraka-plugin-karma
