@@ -23,6 +23,7 @@
   "homepage": "https://github.com/haraka/haraka-plugin-karma#readme",
   "dependencies": {
     "address-rfc2821": "^1.0.1",
+    "haraka-constants": "^1.0.0",
     "haraka-utils": "^1.0.0"
   },
   "devDependencies": {

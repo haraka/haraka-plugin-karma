@@ -1,7 +1,8 @@
 'use strict';
 // karma - reward good and penalize bad mail senders
 
-var utils  = require('haraka-utils');
+var constants = require('haraka-constants');
+var utils     = require('haraka-utils');
 
 var phase_prefixes = utils.to_object([
   'connect','helo','mail_from','rcpt_to','data'
@@ -382,7 +383,7 @@ exports.should_we_deny = function (next, connection, hook) {
   }
 
   return plugin.apply_tarpit(connection, hook, score, function () {
-    next(DENY, rejectMsg);
+    next(constants.DENY, rejectMsg);
   });
 };
 
@@ -405,7 +406,7 @@ exports.hook_deny = function (next, connection, params) {
   }
 
   // let temporary errors pass through
-  if (pi_deny === DENYSOFT || pi_deny === DENYSOFTDISCONNECT) {
+  if (pi_deny === constants.DENYSOFT || pi_deny === constants.DENYSOFTDISCONNECT) {
     return next();
   }
 
@@ -413,9 +414,9 @@ exports.hook_deny = function (next, connection, params) {
     // intercept any other denials
     connection.results.add(plugin, {fail: 'deny:' + pi_name});
 
-    if (pi_deny === DENY ||
-      pi_deny === DENYDISCONNECT ||
-      pi_deny === DISCONNECT) {
+    if (pi_deny === constants.DENY ||
+      pi_deny === constants.DENYDISCONNECT ||
+      pi_deny === constants.DISCONNECT) {
       connection.results.incr(plugin, {score: -2});
     }
     else {
@@ -424,14 +425,14 @@ exports.hook_deny = function (next, connection, params) {
   }
 
   // let the connection continue
-  return next(OK);
+  return next(constants.OK);
 };
 
 exports.hook_connect = function (next, connection) {
   var plugin = this;
   var asnkey = plugin.get_asn_key(connection);
   if (asnkey) {
-      plugin.check_asn(connection, asnkey);
+    plugin.check_asn(connection, asnkey);
   }
   plugin.should_we_deny(next, connection, 'connect');
 };
@@ -694,7 +695,7 @@ exports.get_award_condition = function (note_key, note_val) {
   if (valbits[1] !== 'if') { return wants; }  // no if condition
 
   if (valbits[2].match(/^(equals|gt|lt|match)$/)) {
-      if (valbits[3]) { wants = valbits[3]; }
+    if (valbits[3]) { wants = valbits[3]; }
   }
   return wants;
 };

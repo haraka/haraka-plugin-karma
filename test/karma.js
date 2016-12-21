@@ -2,6 +2,7 @@
 
 var Address      = require('address-rfc2821').Address;
 var fixtures     = require('haraka-test-fixtures');
+var constants    = require('haraka-constants');
 
 var stub         = fixtures.stub.stub;
 
@@ -80,7 +81,7 @@ exports.hook_deny = {
   'no params': function (test) {
     test.expect(1);
     var next = function (rc) {
-      test.equal(OK, rc);
+      test.equal(constants.OK, rc);
       test.done();
     };
     this.plugin.hook_deny(next, this.connection, ['','','','']);
@@ -127,7 +128,7 @@ exports.hook_deny = {
       test.equal(undefined, rc);
       test.done();
     };
-    this.plugin.hook_deny(next, this.connection, [DENYSOFT,'','','','','']);
+    this.plugin.hook_deny(next, this.connection, [constants.DENYSOFT,'','','','','']);
   },
 };
 
@@ -401,7 +402,7 @@ exports.should_we_deny = {
   'valid score, -6, deny_hook': function (test) {
     test.expect(2);
     var next = function (rc, msg) {
-      test.equal(DENY, rc);
+      test.equal(constants.DENY, rc);
       test.ok(msg);
       test.done();
     }.bind(this);
