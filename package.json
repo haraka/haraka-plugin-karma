@@ -4,9 +4,9 @@
   "description": "Watch live SMTP traffic in a web interface",
   "main": "index.js",
   "scripts": {
-    "test": "mocha",
+    "test": "./run_tests",
     "lint": "./node_modules/.bin/eslint *.js lib/**.js test/*.js",
-    "cover": "./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha"
+    "cover": "./node_modules/.bin/istanbul cover ./run_tests"
   },
   "repository": {
     "type": "git",
@@ -29,6 +29,6 @@
   "devDependencies": {
     "eslint": ">=3",
     "haraka-test-fixtures": "*",
-    "mocha": "*"
+    "nodeunit": "*"
   }
 }
