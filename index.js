@@ -29,7 +29,7 @@ exports.register = function () {
   plugin.register_hook('init_child',   'init_redis_plugin');
 
   plugin.register_hook('connect_init', 'results_init');
-  plugin.register_hook('connect_init', 'history_from_redis');
+  plugin.register_hook('connect_init', 'ip_history_from_redis');
 };
 
 exports.load_karma_ini = function () {
@@ -390,10 +390,10 @@ exports.should_we_deny = function (next, connection, hook) {
 exports.hook_deny = function (next, connection, params) {
   var plugin = this;
   var pi_deny     = params[0];  // (constants.deny, denysoft, ok)
-//var pi_message  = params[1];
+  // var pi_message  = params[1];
   var pi_name     = params[2];
-//var pi_function = params[3];
-//var pi_params   = params[4];
+  // var pi_function = params[3];
+  // var pi_params   = params[4];
   var pi_hook     = params[5];
 
   // exceptions, whose 'DENY' should not be captured
@@ -412,7 +412,7 @@ exports.hook_deny = function (next, connection, params) {
 
   if (connection.results) {
     // intercept any other denials
-    connection.results.add(plugin, {fail: 'deny:' + pi_name});
+    connection.results.add(plugin, {msg: 'deny:' + pi_name});
 
     if (pi_deny === constants.DENY ||
       pi_deny === constants.DENYDISCONNECT ||
@@ -424,7 +424,7 @@ exports.hook_deny = function (next, connection, params) {
     }
   }
 
-  // let the connection continue
+  // let the connection resume
   return next(constants.OK);
 };
 
@@ -469,7 +469,7 @@ exports.hook_unrecognized_command = function(next, connection, cmd) {
   return plugin.should_we_deny(next, connection, 'unrecognized_command');
 };
 
-exports.history_from_redis = function (next, connection) {
+exports.ip_history_from_redis = function (next, connection) {
   var plugin = this;
 
   var expire = (plugin.cfg.redis.expire_days || 60) * 86400; // to days
