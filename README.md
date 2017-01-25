@@ -2,6 +2,7 @@
 [![Code Coverage][cov-img]][cov-url]
 [![Code Climate][clim-img]][clim-url]
 [![NPM][npm-img]][npm-url]
+[![Greenkeeper badge](https://badges.greenkeeper.io/haraka/haraka-plugin-karma.svg)](https://greenkeeper.io/)
 
 # Karma - A heuristics based reputation engine for the Haraka MTA
 
