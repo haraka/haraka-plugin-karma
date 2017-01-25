@@ -5,6 +5,8 @@
 
 # Karma - A heuristics based reputation engine for the Haraka MTA
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/haraka/haraka-plugin-karma.svg)](https://greenkeeper.io/)
+
 Karma is a heuristic scoring engine that uses connection metadata and other Haraka plugin data as inputs. Connections scoring in excess of specified thresholds are rewarded or [penalized](#penalties) in proportionate ways.
 
 ## Description
