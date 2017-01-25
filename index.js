@@ -23,7 +23,7 @@ exports.register = function () {
   ]);
 
   plugin.load_karma_ini();
-  plugin.load_redis_ini();
+  plugin.merge_redis_ini();
 
   plugin.register_hook('init_master',  'init_redis_plugin');
   plugin.register_hook('init_child',   'init_redis_plugin');
@@ -68,8 +68,6 @@ exports.load_karma_ini = function () {
   if (!cfg.redis.port && cfg.redis.server_port) {
     cfg.redis.port = cfg.redis.server_port; // backwards compat
   }
-  if (!cfg.redis.host) cfg.redis.host = '127.0.0.1';
-  if (!cfg.redis.port) cfg.redis.port = 6379;
 };
 
 exports.results_init = function (next, connection) {
