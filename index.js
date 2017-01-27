@@ -107,7 +107,7 @@ exports.preparse_result_awards = function () {
 
   // arrange results for rapid traversal by check_result() :
   // ex: karma.result_awards.clamd.fail = { .... }
-  Object.keys(plugin.cfg.result_awards).forEach(function(anum) {
+  Object.keys(plugin.cfg.result_awards).forEach(function (anum) {
     // plugin, property, operator, value, award, reason, resolution
     var parts = plugin.cfg.result_awards[anum].split(/(?:\s*\|\s*)/);
     var pi_name = parts[0];
@@ -161,6 +161,8 @@ exports.check_result = function (connection, message) {
       // { id: '011', operator: 'equals', value: 'all_bad', award: '-2'}
       var thisResArr = plugin.result_as_array(thisResult);
       switch (thisAward.operator) {
+        case 'eq':
+        case 'equal':
         case 'equals':
           plugin.check_result_equal(thisResArr, thisAward, connection);
           break;
@@ -172,6 +174,9 @@ exports.check_result = function (connection, message) {
           break;
         case 'gt':
           plugin.check_result_gt(thisResArr, thisAward, connection);
+          break;
+        case 'length':
+          plugin.check_result_length(thisResArr, thisAward, connection);
           break;
       }
     }
@@ -233,7 +238,6 @@ exports.check_result_gt = function (thisResult, thisAward, conn) {
 exports.check_result_equal = function (thisResult, thisAward, conn) {
   var plugin = this;
 
-  /* jshint eqeqeq: false */
   for (var j=0; j < thisResult.length; j++) {
     if (thisAward.value === 'true') {
       if (!thisResult[j]) continue;
@@ -258,6 +262,34 @@ exports.check_result_match = function (thisResult, thisAward, conn) {
   for (var i=0; i < thisResult.length; i++) {
     if (!re.test(thisResult[i])) continue;
     if (conn.results.has('karma', 'awards', thisAward.id)) continue;
+
+    conn.results.incr(plugin, {score: thisAward.award});
+    conn.results.push(plugin, {awards: thisAward.id});
+  }
+};
+
+exports.check_result_length = function (thisResult, thisAward, conn) {
+  var plugin = this;
+
+  for (let j=0; j < thisResult.length; j++) {
+    var [operator, qty] = thisAward.value.split(/\s+/);
+
+    switch (operator) {
+      case 'eq':
+      case 'equal':
+      case 'equals':
+        if (parseInt(thisResult[j], 10) != parseInt(qty, 10)) continue;
+        break;
+      case 'gt':
+        if (parseInt(thisResult[j], 10) <= parseInt(qty, 10)) continue;
+        break;
+      case 'lt':
+        if (parseInt(thisResult[j], 10) >= parseInt(qty, 10)) continue;
+        break;
+      default:
+        conn.results.add(plugin, { err: 'invalid operator:' + operator });
+        continue;
+    }
 
     conn.results.incr(plugin, {score: thisAward.award});
     conn.results.push(plugin, {awards: thisAward.id});
@@ -458,7 +490,7 @@ exports.hook_reset_transaction = function (next, connection) {
   plugin.should_we_deny(next, connection, 'reset_transaction');
 };
 
-exports.hook_unrecognized_command = function(next, connection, cmd) {
+exports.hook_unrecognized_command = function (next, connection, cmd) {
   var plugin = this;
 
   connection.results.incr(plugin, {score: -1});
@@ -718,7 +750,7 @@ exports.check_awards = function (connection) {
     // test the desired condition
     var bits = award_terms.split(/\s+/);
     var award = parseFloat(bits[0]);
-    if (!bits[1] || bits[1] !== 'if') {      // no if conditions
+    if (!bits[1] || bits[1] !== 'if') {    // no if conditions
       if (!note) { continue; }             // failed truth test
       if (!wants) {                        // no wants, truth matches
         plugin.apply_award(connection, key, award);
@@ -767,7 +799,7 @@ exports.check_awards = function (connection) {
           default:
             connection.logerror(plugin, 'length operator "' +
               operator + '" not supported.');
-            continue;   // not supported!
+            continue;
         }
         break;
       case 'in':              // if in pass whitelisted
@@ -840,7 +872,7 @@ exports.check_syntax_RcptTo = function (connection) {
   connection.results.add(plugin, {fail: 'rfc5321.RcptTo'});
 };
 
-exports.assemble_note_obj = function(prefix, key) {
+exports.assemble_note_obj = function (prefix, key) {
   var note = prefix;
   var parts = key.split('.');
   while (parts.length > 0) {

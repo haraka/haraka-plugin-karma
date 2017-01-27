@@ -28,6 +28,7 @@
   },
   "devDependencies": {
     "eslint": ">=3",
+    "eslint-plugin-haraka": "^1.0.4",
     "haraka-test-fixtures": "*",
     "nodeunit": "*"
   }

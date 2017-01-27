@@ -540,6 +540,85 @@ exports.check_result_match = {
   },
 };
 
+exports.check_result_length = {
+  setUp : _set_up,
+  'eq pattern is scored': function (test) {
+    test.expect(2);
+    var award = {
+      id         : 1,           award      : 2,
+      operator   : 'length',    value      : 'eq 3',
+      reason     : 'testing',   resolution : 'hah',
+    };
+    this.plugin.check_result_length(['3'], award, this.connection);
+    // console.log(this.connection.results.store);
+    test.equals(this.connection.results.store.karma.score, 2);
+    test.equals(this.connection.results.store.karma.awards[0], 1);
+    test.done();
+  },
+  'eq pattern is not scored': function (test) {
+    test.expect(1);
+    var award = {
+      id         : 1,           award      : 2,
+      operator   : 'length',    value      : 'eq 3',
+      reason     : 'testing',   resolution : 'hah',
+    };
+    this.plugin.check_result_length(['4'], award, this.connection);
+    // console.log(this.connection.results.store.karma);
+    test.deepEqual(this.connection.results.store.karma, undefined);
+    test.done();
+  },
+  'gt pattern is scored': function (test) {
+    test.expect(2);
+    var award = {
+      id         : 1,           award      : 2,
+      operator   : 'length',    value      : 'gt 3',
+      reason     : 'testing',   resolution : 'hah',
+    };
+    this.plugin.check_result_length(['5'], award, this.connection);
+    // console.log(this.connection.results.store);
+    test.equals(this.connection.results.store.karma.score, 2);
+    test.equals(this.connection.results.store.karma.awards[0], 1);
+    test.done();
+  },
+  'gt pattern is not scored': function (test) {
+    test.expect(1);
+    var award = {
+      id         : 1,           award      : 2,
+      operator   : 'length',    value      : 'gt 3',
+      reason     : 'testing',   resolution : 'hah',
+    };
+    this.plugin.check_result_length(['3'], award, this.connection);
+    // console.log(this.connection.results.store.karma);
+    test.deepEqual(this.connection.results.store.karma, undefined);
+    test.done();
+  },
+  'lt pattern is scored': function (test) {
+    test.expect(2);
+    var award = {
+      id         : 1,           award      : 2,
+      operator   : 'length',    value      : 'lt 3',
+      reason     : 'testing',   resolution : 'hah',
+    };
+    this.plugin.check_result_length(['2'], award, this.connection);
+    // console.log(this.connection.results.store);
+    test.equals(this.connection.results.store.karma.score, 2);
+    test.equals(this.connection.results.store.karma.awards[0], 1);
+    test.done();
+  },
+  'lt pattern is not scored': function (test) {
+    test.expect(1);
+    var award = {
+      id         : 1,           award      : 2,
+      operator   : 'length',    value      : 'lt 3',
+      reason     : 'testing',   resolution : 'hah',
+    };
+    this.plugin.check_result_length(['3'], award, this.connection);
+    // console.log(this.connection.results.store.karma);
+    test.deepEqual(this.connection.results.store.karma, undefined);
+    test.done();
+  },
+};
+
 exports.check_result = {
   setUp : _set_up,
   'geoip country is scored': function (test) {
