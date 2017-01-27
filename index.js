@@ -272,7 +272,10 @@ exports.check_result_length = function (thisResult, thisAward, conn) {
   var plugin = this;
 
   for (let j=0; j < thisResult.length; j++) {
-    var [operator, qty] = thisAward.value.split(/\s+/);
+    // var [operator, qty] = thisAward.value.split(/\s+/); // requires node 6
+    var matches = thisAward.value.split(/\s+/);
+    var operator = matches[0];
+    var qty = matches[1];
 
     switch (operator) {
       case 'eq':

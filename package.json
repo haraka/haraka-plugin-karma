@@ -1,6 +1,6 @@
 {
   "name": "haraka-plugin-karma",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Watch live SMTP traffic in a web interface",
   "main": "index.js",
   "scripts": {
@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "eslint": ">=3",
-    "eslint-plugin-haraka": "^1.0.4",
+    "eslint-plugin-haraka": "*",
     "haraka-test-fixtures": "*",
     "nodeunit": "*"
   }
