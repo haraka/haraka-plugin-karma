@@ -1,5 +1,4 @@
 [![Build Status][ci-img]][ci-url]
-[![Code Coverage][cov-img]][cov-url]
 [![Code Climate][clim-img]][clim-url]
 [![NPM][npm-img]][npm-url]
 [![Greenkeeper badge](https://badges.greenkeeper.io/haraka/haraka-plugin-karma.svg)](https://greenkeeper.io/)
@@ -16,9 +15,9 @@ By scoring and weighting several "95+" plugins, accuracy rates above 99% are att
 
 ### Karma Prereqs
 
-One challenge for mail filtering is that filters (or plugins, in Haraka's case) are usually called in sequence. A message passes from one filter to the next in a pipeline and each filter gets to choose "yeah or nay." In order for karma to transcend this limit, karma requires that **every** filter passes every message. Nearly all Haraka plugins have a `reject` or `deny` option for this reason.
+One challenge for mail filtering is that filters (or plugins, in Haraka's case) are usually called in sequence. A message passes from one filter to the next in a pipeline and each filter gets to choose "yay or nay." In order for karma to transcend this limit, karma requires that **every** filter passes every message. Nearly all Haraka plugins have a `reject` or `deny` option for this reason.
 
-In order to score a filters results, filters must save their results to the [Result Store][results-url]. Karma will see that and apply the award specified in `karma.ini`.
+In order to score a plugins results, plugins must save their results to the [Result Store][results-url]. Karma will see that and apply the awards specified in `karma.ini`.
 
 
 ## How Karma Works
@@ -210,3 +209,5 @@ Expect to use karma *with* content filters.
 [clim-url]: https://codeclimate.com/github/haraka/haraka-plugin-karma
 [npm-img]: https://nodei.co/npm/haraka-plugin-karma.png
 [npm-url]: https://www.npmjs.com/package/haraka-plugin-karma
+
+<!-- [![Code Coverage][cov-img]][cov-url] -->

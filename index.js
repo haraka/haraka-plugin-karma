@@ -10,7 +10,7 @@ var phase_prefixes = utils.to_object([
 
 exports.register = function () {
   var plugin = this;
-  plugin.inherits('redis');
+  plugin.inherits('haraka-plugin-redis');
 
   // set up defaults
   plugin.deny_hooks = utils.to_object(
@@ -422,7 +422,7 @@ exports.should_we_deny = function (next, connection, hook) {
 
 exports.hook_deny = function (next, connection, params) {
   var plugin = this;
-  var pi_deny     = params[0];  // (constants.deny, denysoft, ok)
+  // var pi_deny     = params[0];  // (constants.deny, denysoft, ok)
   // var pi_message  = params[1];
   var pi_name     = params[2];
   // var pi_function = params[3];
@@ -438,27 +438,15 @@ exports.hook_deny = function (next, connection, params) {
     return next();
   }
 
-  // let temporary errors pass through
-  if (pi_deny === constants.DENYSOFT || pi_deny === constants.DENYSOFTDISCONNECT) {
-    return next();
+  if (!connection.results) {
+    return next(constants.OK); // resume the connection
   }
 
-  if (connection.results) {
-    // intercept any other denials
-    connection.results.add(plugin, {msg: 'deny:' + pi_name});
+  // intercept any other denials
+  connection.results.add(plugin, { msg: 'deny:' + pi_name });
+  connection.results.incr(plugin, { score: -2 });
 
-    if (pi_deny === constants.DENY ||
-      pi_deny === constants.DENYDISCONNECT ||
-      pi_deny === constants.DISCONNECT) {
-      connection.results.incr(plugin, {score: -2});
-    }
-    else {
-      connection.results.incr(plugin, {score: -1});
-    }
-  }
-
-  // let the connection resume
-  return next(constants.OK);
+  next(constants.OK);  // resume the connection
 };
 
 exports.hook_connect = function (next, connection) {

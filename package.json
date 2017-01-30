@@ -1,6 +1,6 @@
 {
   "name": "haraka-plugin-karma",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Watch live SMTP traffic in a web interface",
   "main": "index.js",
   "scripts": {
@@ -24,7 +24,8 @@
   "dependencies": {
     "address-rfc2821": "*",
     "haraka-constants": ">=1.0.2",
-    "haraka-utils": "*"
+    "haraka-utils": "*",
+    "haraka-plugin-redis": "*"
   },
   "devDependencies": {
     "eslint": ">=3",

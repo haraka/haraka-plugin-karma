@@ -16,7 +16,7 @@ var _set_up = function (done) {
 
   this.connection = fixtures.connection.createConnection({}, { notes: {} });
 
-  this.connection.transaction = stub;
+  this.connection.transaction = fixtures.transaction.createTransaction();
   this.connection.transaction.results = new fixtures.result_store(this.plugin);
 
   done();
@@ -81,7 +81,7 @@ exports.hook_deny = {
   'no params': function (test) {
     test.expect(1);
     var next = function (rc) {
-      test.equal(constants.OK, rc);
+      test.equal(constants.OK, rc, rc);
       test.done();
     };
     this.plugin.hook_deny(next, this.connection, ['','','','']);
@@ -125,7 +125,7 @@ exports.hook_deny = {
   'denysoft': function (test) {
     test.expect(1);
     var next = function (rc) {
-      test.equal(undefined, rc);
+      test.equal(constants.OK, rc);
       test.done();
     };
     this.plugin.hook_deny(next, this.connection, [constants.DENYSOFT,'','','','','']);
