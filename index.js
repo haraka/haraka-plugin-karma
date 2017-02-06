@@ -23,7 +23,6 @@ exports.register = function () {
   ]);
 
   plugin.load_karma_ini();
-  plugin.merge_redis_ini();
 
   plugin.register_hook('init_master',  'init_redis_plugin');
   plugin.register_hook('init_child',   'init_redis_plugin');
@@ -42,6 +41,8 @@ exports.load_karma_ini = function () {
   }, function () {
     plugin.load_karma_ini();
   });
+
+  plugin.merge_redis_ini();
 
   var cfg = plugin.cfg;
   if (cfg.deny && cfg.deny.hooks) {
