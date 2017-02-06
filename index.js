@@ -497,6 +497,9 @@ exports.ip_history_from_redis = function (next, connection) {
   var expire = (plugin.cfg.redis.expire_days || 60) * 86400; // to days
   var dbkey  = 'karma|' + connection.remote.ip;
 
+  // redis plugin is emitting errors, no need to here
+  if (!plugin.db) return next();
+
   plugin.db.hgetall(dbkey, function (err, dbr) {
     if (err) {
       connection.results.add(plugin, {err: err});
@@ -600,6 +603,7 @@ exports.hook_data_post = function (next, connection) {
 
 exports.increment = function (connection, key, val) {
   var plugin = this;
+  if (!plugin.db) return;
 
   plugin.db.hincrby('karma|' + connection.remote.ip, key, 1);
 
@@ -889,6 +893,8 @@ exports.check_asn = function (connection, asnkey) {
     report_msg = 'karma';
   }
 
+  if (!plugin.db) return;
+
   plugin.db.hgetall(asnkey, function (err, res) {
     if (err) {
       connection.results.add(plugin, {err: err});
@@ -929,9 +935,9 @@ exports.check_asn = function (connection, asnkey) {
   });
 };
 
-// Redis DB functions
 exports.init_ip = function (dbkey, rip, expire) {
   var plugin = this;
+  if (!plugin.db) return;
   plugin.db.multi()
       .hmset(dbkey, {'bad': 0, 'good': 0, 'connections': 1})
       .expire(dbkey, expire)
@@ -951,6 +957,7 @@ exports.get_asn_key = function (connection) {
 
 exports.init_asn = function (asnkey, expire) {
   var plugin = this;
+  if (!plugin.db) return;
   plugin.db.multi()
       .hmset(asnkey, {'bad': 0, 'good': 0, 'connections': 1})
       .expire(asnkey, expire * 2)    // keep ASN longer
