@@ -26,6 +26,7 @@ exports.karma_init = {
   setUp : _set_up,
   'load_karma_ini': function (test) {
     test.expect(2);
+    this.plugin.inherits('haraka-plugin-redis');
     this.plugin.load_karma_ini();
     test.ok(this.plugin.cfg.asn);
     test.ok(this.plugin.deny_hooks);

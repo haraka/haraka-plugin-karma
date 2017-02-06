@@ -1,6 +1,6 @@
 {
   "name": "haraka-plugin-karma",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Watch live SMTP traffic in a web interface",
   "main": "index.js",
   "scripts": {

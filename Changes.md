@@ -3,7 +3,7 @@
 
 - move merge_redis_ini into load_karma_ini, so it also gets applied
   after a karma.ini change 
-- 
+- skip redis operations when no connection exists
 
 
 ## 1.0.4 - 2017-01-29
