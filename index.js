@@ -518,21 +518,23 @@ exports.ip_history_from_redis = function (next, connection) {
         if (err2) connection.results.add(plugin, {err: err2});
       });
 
-    // Careful: don't become self-fulfilling prophecy.
-    if (parseInt(dbr.good) > 5 && parseInt(dbr.bad) === 0) {
-      connection.results.add(plugin, {pass: 'all_good'});
-    }
-    if (parseInt(dbr.bad) > 5 && parseInt(dbr.good) === 0) {
-      connection.results.add(plugin, {fail: 'all_bad'});
-    }
-
-    connection.results.add(plugin, {
+    var results = {
       good: dbr.good,
       bad: dbr.bad,
       connections: dbr.connections,
       history: parseInt((dbr.good || 0) - (dbr.bad || 0)),
       emit: true,
-    });
+    }
+
+    // Careful: don't become self-fulfilling prophecy.
+    if (parseInt(dbr.good) > 5 && parseInt(dbr.bad) === 0) {
+      results.pass = 'all_good';
+    }
+    if (parseInt(dbr.bad) > 5 && parseInt(dbr.good) === 0) {
+      results.fail = 'all_bad';
+    }
+
+    connection.results.add(plugin, results);
 
     plugin.check_awards(connection);
     return next();
@@ -884,16 +886,13 @@ exports.assemble_note_obj = function (prefix, key) {
 
 exports.check_asn = function (connection, asnkey) {
   var plugin = this;
+  if (!plugin.db) return;
 
-  var report_as = plugin;
-  var report_msg = 'asn';
+  var report_as = { name: plugin.name };
 
   if (plugin.cfg.asn.report_as) {
-    report_as = { name: plugin.cfg.asn.report_as };
-    report_msg = 'karma';
+    report_as.name = plugin.cfg.asn.report_as;
   }
-
-  if (!plugin.db) return;
 
   plugin.db.hgetall(asnkey, function (err, res) {
     if (err) {
@@ -909,29 +908,31 @@ exports.check_asn = function (connection, asnkey) {
 
     plugin.db.hincrby(asnkey, 'connections', 1);
     var asn_score = parseInt(res.good || 0) - (res.bad || 0);
-    if (asn_score) {
-      if (asn_score < -5) {
-        connection.results.add(report_as, {fail: report_msg});
-      }
-      else if (asn_score > 5) {
-        connection.results.add(report_as, {pass: report_msg});
-      }
-    }
-
-    if (parseInt(res.bad) > 5 && parseInt(res.good) === 0) {
-      connection.results.add(report_as, {fail: 'asn_all_bad'});
-    }
-    if (parseInt(res.good) > 5 && parseInt(res.bad) === 0) {
-      connection.results.add(report_as, {pass: 'asn_all_good'});
-    }
-
-    connection.results.add(report_as, {
+    var asn_results = {
       asn_score: asn_score,
       asn_connections: res.connections,
       asn_good: res.good,
       asn_bad: res.bad,
       emit: true,
-    });
+    }
+
+    if (asn_score) {
+      if (asn_score < -5) {
+        asn_results.fail = 'asn:history';
+      }
+      else if (asn_score > 5) {
+        asn_results.pass = 'asn:history';
+      }
+    }
+
+    if (parseInt(res.bad) > 5 && parseInt(res.good) === 0) {
+      asn_results.fail = 'asn:all_bad';
+    }
+    if (parseInt(res.good) > 5 && parseInt(res.bad) === 0) {
+      asn_results.pass = 'asn:all_good';
+    }
+
+    connection.results.add(report_as, asn_results);
   });
 };
 
