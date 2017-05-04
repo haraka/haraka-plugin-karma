@@ -90,7 +90,11 @@ exports.results_init = function (next, connection) {
   }
   connection.results.add(plugin, { score:0, todo: todo });
 
-  if (!connection.server.notes.redis) return next();
+  if (!connection.server.notes.redis) {
+    connection.logerror(plugin, 'karma requires the redis plugin');
+    return next();
+  }
+
   if (!plugin.result_awards) return next();  // not configured
 
   // subscribe to result_store publish messages
