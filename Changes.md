@@ -1,4 +1,8 @@
 
+## 1.0.6 - 2017-05-04
+
+- emit error if redis plugin didn't create connection
+
 ## 1.0.5 - 2017-02-06
 
 - move merge_redis_ini into load_karma_ini, so it also gets applied
