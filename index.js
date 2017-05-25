@@ -29,6 +29,8 @@ exports.register = function () {
 
   plugin.register_hook('connect_init', 'results_init');
   plugin.register_hook('connect_init', 'ip_history_from_redis');
+
+  plugin.server.notes.results_redis_publish = true;
 };
 
 exports.load_karma_ini = function () {
