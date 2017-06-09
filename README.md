@@ -191,7 +191,6 @@ Spam delivered by servers with good reputations normally pass karma's checks.
 Expect to use karma *with* content filters.
 
 
-
 [p0f-url]: /manual/plugins/connect.p0f.html
 [geoip-url]: https://github.com/haraka/haraka-plugin-geoip
 [dnsbl-url]: /manual/plugins/dnsbl.html
