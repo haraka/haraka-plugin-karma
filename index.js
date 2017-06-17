@@ -14,8 +14,8 @@ exports.register = function () {
 
   // set up defaults
   plugin.deny_hooks = utils.to_object(
-          ['unrecognized_command','helo','data','data_post','queue']
-      );
+    ['unrecognized_command','helo','data','data_post','queue']
+  );
   plugin.deny_exclude_hooks = utils.to_object('rcpt_to, queue');
   plugin.deny_exclude_plugins = utils.to_object([
     'access', 'helo.checks', 'data.headers', 'spamassassin',
@@ -836,9 +836,9 @@ exports.apply_award = function (connection, nl, award) {
   connection.logdebug(plugin, 'applied ' + nl + ':' + award);
 
   var trimmed = nl.substring(0, 5) === 'notes' ? nl.substring(6) :
-                nl.substring(0, 7) === 'results' ? nl.substring(8) :
-                nl.substring(0,19) === 'transaction.results' ?
-                nl.substring(20) : nl;
+    nl.substring(0, 7) === 'results' ? nl.substring(8) :
+      nl.substring(0,19) === 'transaction.results' ?
+        nl.substring(20) : nl;
 
   if (trimmed.substring(0,7) === 'rcpt_to') trimmed = trimmed.substring(8);
   if (trimmed.substring(0,7) === 'mail_from') trimmed = trimmed.substring(10);
@@ -946,9 +946,9 @@ exports.init_ip = function (dbkey, rip, expire) {
   var plugin = this;
   if (!plugin.db) return;
   plugin.db.multi()
-      .hmset(dbkey, {'bad': 0, 'good': 0, 'connections': 1})
-      .expire(dbkey, expire)
-      .exec();
+    .hmset(dbkey, {'bad': 0, 'good': 0, 'connections': 1})
+    .expire(dbkey, expire)
+    .exec();
 };
 
 exports.get_asn_key = function (connection) {
@@ -966,7 +966,7 @@ exports.init_asn = function (asnkey, expire) {
   var plugin = this;
   if (!plugin.db) return;
   plugin.db.multi()
-      .hmset(asnkey, {'bad': 0, 'good': 0, 'connections': 1})
-      .expire(asnkey, expire * 2)    // keep ASN longer
-      .exec();
+    .hmset(asnkey, {'bad': 0, 'good': 0, 'connections': 1})
+    .expire(asnkey, expire * 2)    // keep ASN longer
+    .exec();
 };

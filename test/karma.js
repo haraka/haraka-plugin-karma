@@ -112,7 +112,7 @@ exports.hook_deny = {
     };
     this.plugin.deny_exclude_hooks = { rcpt_to: true };
     this.plugin.hook_deny(next, this.connection,
-            ['','','','','','rcpt_to']);
+      ['','','','','','rcpt_to']);
   },
   'pi_hook=queue': function (test) {
     test.expect(1);
@@ -269,7 +269,7 @@ exports.check_awards = {
       todo: { 'results.auth/auth_base.fail@PLAIN': '-1 if in' }
     });
     this.connection.results.add('auth/auth_base',
-            {fail: 'PLAIN'});
+      {fail: 'PLAIN'});
     var r = this.plugin.check_awards(this.connection);
     test.equal(undefined, r);
     test.equal('auth/auth_base.fail', this.connection.results.get('karma').fail[0]);
@@ -630,7 +630,7 @@ exports.check_result = {
     this.plugin.preparse_result_awards();
     this.connection.results.add({name: 'geoip'}, {country: 'CN'});
     this.plugin.check_result(this.connection,
-            '{"plugin":"geoip","result":{"country":"CN"}}');
+      '{"plugin":"geoip","result":{"country":"CN"}}');
     // console.log(this.connection.results.store);
     test.equals(this.connection.results.store.karma.score, 2);
     test.equals(this.connection.results.store.karma.awards[0], 1);
@@ -644,7 +644,7 @@ exports.check_result = {
     this.plugin.preparse_result_awards();
     this.connection.results.add({name: 'dnsbl'}, {fail: 'dnsbl.sorbs.net'});
     this.plugin.check_result(this.connection,
-            '{"plugin":"dnsbl","result":{"fail":"dnsbl.sorbs.net"}}');
+      '{"plugin":"dnsbl","result":{"fail":"dnsbl.sorbs.net"}}');
     // console.log(this.connection.results.store);
     test.equals(this.connection.results.store.karma.score, -5);
     test.equals(this.connection.results.store.karma.awards[0], 2);

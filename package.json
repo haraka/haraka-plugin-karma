@@ -1,11 +1,12 @@
 {
   "name": "haraka-plugin-karma",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Watch live SMTP traffic in a web interface",
   "main": "index.js",
   "scripts": {
     "test": "./run_tests",
     "lint": "./node_modules/.bin/eslint *.js test/*.js",
+    "lintfix": "./node_modules/.bin/eslint --fix *.js test/*.js",
     "cover": "./node_modules/.bin/istanbul cover ./run_tests"
   },
   "repository": {

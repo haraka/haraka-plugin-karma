@@ -1,4 +1,9 @@
 
+## 1.0.7 - 2017-06-16
+
+- update for eslint 4 compat
+- Add results_redis_publish=true for haraka-results changes #9
+
 ## 1.0.6 - 2017-05-04
 
 - emit error if redis plugin didn't create connection
