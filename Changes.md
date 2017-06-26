@@ -1,4 +1,8 @@
 
+## 1.0.8 - 2017-06-26
+
+- revert #9, it breaks current Haraka deployments
+
 ## 1.0.7 - 2017-06-16
 
 - update for eslint 4 compat
