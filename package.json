@@ -4,7 +4,7 @@
   "description": "Watch live SMTP traffic in a web interface",
   "main": "index.js",
   "scripts": {
-    "test": "./run_tests",
+    "test": "node run_tests",
     "lint": "./node_modules/.bin/eslint *.js test/*.js",
     "lintfix": "./node_modules/.bin/eslint --fix *.js test/*.js",
     "cover": "./node_modules/.bin/istanbul cover ./run_tests"
