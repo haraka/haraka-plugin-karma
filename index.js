@@ -1,15 +1,16 @@
 'use strict';
 // karma - reward good and penalize bad mail senders
 
-var constants = require('haraka-constants');
-var utils     = require('haraka-utils');
+const constants = require('haraka-constants');
+const utils     = require('haraka-utils');
 
-var phase_prefixes = utils.to_object([
+let phase_prefixes = utils.to_object([
   'connect','helo','mail_from','rcpt_to','data'
 ]);
 
 exports.register = function () {
-  var plugin = this;
+  let plugin = this;
+
   plugin.inherits('haraka-plugin-redis');
 
   // set up defaults
@@ -29,10 +30,10 @@ exports.register = function () {
 
   plugin.register_hook('connect_init', 'results_init');
   plugin.register_hook('connect_init', 'ip_history_from_redis');
-};
+}
 
 exports.load_karma_ini = function () {
-  var plugin = this;
+  let plugin = this;
 
   plugin.cfg = plugin.config.get('karma.ini', {
     booleans: [
@@ -44,12 +45,12 @@ exports.load_karma_ini = function () {
 
   plugin.merge_redis_ini();
 
-  var cfg = plugin.cfg;
+  let cfg = plugin.cfg;
   if (cfg.deny && cfg.deny.hooks) {
     plugin.deny_hooks = utils.to_object(cfg.deny.hooks);
   }
 
-  var e = cfg.deny_excludes;
+  let e = cfg.deny_excludes;
   if (e && e.hooks) {
     plugin.deny_exclude_hooks = utils.to_object(e.hooks);
   }
@@ -69,10 +70,10 @@ exports.load_karma_ini = function () {
   if (!cfg.redis.port && cfg.redis.server_port) {
     cfg.redis.port = cfg.redis.server_port; // backwards compat
   }
-};
+}
 
 exports.results_init = function (next, connection) {
-  var plugin = this;
+  let plugin = this;
 
   if (connection.results.get('karma')) {
     connection.logerror(plugin, 'this should never happen');
@@ -82,13 +83,16 @@ exports.results_init = function (next, connection) {
   if (plugin.cfg.awards) {
     // todo is a list of connection/transaction awards to 'watch' for.
     // When discovered, apply the awards value
-    var todo = {};
-    for (var key in plugin.cfg.awards) {
-      var award = plugin.cfg.awards[key].toString();
+    let todo = {};
+    for (let key in plugin.cfg.awards) {
+      let award = plugin.cfg.awards[key].toString();
       todo[key] = award;
     }
+    connection.results.add(plugin, { score:0, todo: todo });
   }
-  connection.results.add(plugin, { score:0, todo: todo });
+  else {
+    connection.results.add(plugin, { score:0 });
+  }
 
   if (!connection.server.notes.redis) {
     connection.logerror(plugin, 'karma requires the redis plugin');
@@ -98,25 +102,25 @@ exports.results_init = function (next, connection) {
   if (!plugin.result_awards) return next();  // not configured
 
   // subscribe to result_store publish messages
-  plugin.redis_subscribe(connection, function () {
-    connection.notes.redis.on('pmessage', function (pattern, channel, message) {
+  plugin.redis_subscribe(connection, () => {
+    connection.notes.redis.on('pmessage', (pattern, channel, message) => {
       plugin.check_result(connection, message);
     });
     next();
-  });
-};
+  })
+}
 
 exports.preparse_result_awards = function () {
-  var plugin = this;
+  let plugin = this;
   if (!plugin.result_awards) plugin.result_awards = {};
 
   // arrange results for rapid traversal by check_result() :
   // ex: karma.result_awards.clamd.fail = { .... }
-  Object.keys(plugin.cfg.result_awards).forEach(function (anum) {
+  Object.keys(plugin.cfg.result_awards).forEach(anum => {
     // plugin, property, operator, value, award, reason, resolution
-    var parts = plugin.cfg.result_awards[anum].split(/(?:\s*\|\s*)/);
-    var pi_name = parts[0];
-    var property = parts[1];
+    let parts = plugin.cfg.result_awards[anum].split(/(?:\s*\|\s*)/);
+    let pi_name = parts[0];
+    let property = parts[1];
     if (!plugin.result_awards[pi_name]) {
       plugin.result_awards[pi_name] = {};
     }
@@ -135,24 +139,24 @@ exports.preparse_result_awards = function () {
 };
 
 exports.check_result = function (connection, message) {
-  var plugin = this;
+  let plugin = this;
   // connection.loginfo(plugin, message);
   // {"plugin":"karma","result":{"fail":"spamassassin.hits"}}
   // {"plugin":"geoip","result":{"country":"CN"}}
 
-  var m = JSON.parse(message);
+  let m = JSON.parse(message);
   if (m && m.result && m.result.asn) {
     plugin.check_result_asn(m.result.asn, connection);
   }
   if (!plugin.result_awards[m.plugin]) return;  // no awards for plugin
 
-  Object.keys(m.result).forEach(function (r) {  // foreach result in mess
+  Object.keys(m.result).forEach(r => {  // foreach result in mess
     if (r === 'emit') return;  // r: pass, fail, skip, err, ...
 
-    var pi_prop = plugin.result_awards[m.plugin][r];
+    let pi_prop = plugin.result_awards[m.plugin][r];
     if (!pi_prop) return;      // no award for this plugin property
 
-    var thisResult = m.result[r];
+    let thisResult = m.result[r];
     // ignore empty arrays, objects, and strings
     if (Array.isArray(thisResult) && thisResult.length === 0) return;
     if (typeof thisResult === 'object' && !Object.keys(thisResult).length) {
@@ -161,10 +165,10 @@ exports.check_result = function (connection, message) {
     if (typeof thisResult === 'string' && !thisResult) return; // empty
 
     // do any award conditions match this result?
-    for (var i=0; i < pi_prop.length; i++) {     // each award...
-      var thisAward = pi_prop[i];
+    for (let i=0; i < pi_prop.length; i++) {     // each award...
+      let thisAward = pi_prop[i];
       // { id: '011', operator: 'equals', value: 'all_bad', award: '-2'}
-      var thisResArr = plugin.result_as_array(thisResult);
+      let thisResArr = plugin.result_as_array(thisResult);
       switch (thisAward.operator) {
         case 'eq':
         case 'equal':
@@ -195,8 +199,8 @@ exports.result_as_array = function (result) {
   if (typeof result === 'boolean') return [result];
   if (Array.isArray(result)) return result;
   if (typeof result === 'object') {
-    var array = [];
-    Object.keys(result).forEach(function (tr) {
+    let array = [];
+    Object.keys(result).forEach(tr => {
       array.push(result[tr]);
     });
     return array;
@@ -206,7 +210,7 @@ exports.result_as_array = function (result) {
 };
 
 exports.check_result_asn = function (asn, conn) {
-  var plugin = this;
+  let plugin = this;
   if (!plugin.cfg.asn_awards) return;
   if (!plugin.cfg.asn_awards[asn]) return;
 
@@ -215,10 +219,10 @@ exports.check_result_asn = function (asn, conn) {
 };
 
 exports.check_result_lt = function (thisResult, thisAward, conn) {
-  var plugin = this;
+  let plugin = this;
 
-  for (var j=0; j < thisResult.length; j++) {
-    var tr = parseFloat(thisResult[j]);
+  for (let j=0; j < thisResult.length; j++) {
+    let tr = parseFloat(thisResult[j]);
     if (tr >= parseFloat(thisAward.value)) continue;
     if (conn.results.has('karma', 'awards', thisAward.id)) continue;
 
@@ -228,10 +232,10 @@ exports.check_result_lt = function (thisResult, thisAward, conn) {
 };
 
 exports.check_result_gt = function (thisResult, thisAward, conn) {
-  var plugin = this;
+  let plugin = this;
 
-  for (var j=0; j < thisResult.length; j++) {
-    var tr = parseFloat(thisResult[j]);
+  for (let j=0; j < thisResult.length; j++) {
+    let tr = parseFloat(thisResult[j]);
     if (tr <= parseFloat(thisAward.value)) continue;
     if (conn.results.has('karma', 'awards', thisAward.id)) continue;
 
@@ -241,9 +245,9 @@ exports.check_result_gt = function (thisResult, thisAward, conn) {
 };
 
 exports.check_result_equal = function (thisResult, thisAward, conn) {
-  var plugin = this;
+  let plugin = this;
 
-  for (var j=0; j < thisResult.length; j++) {
+  for (let j=0; j < thisResult.length; j++) {
     if (thisAward.value === 'true') {
       if (!thisResult[j]) continue;
     }
@@ -261,10 +265,10 @@ exports.check_result_equal = function (thisResult, thisAward, conn) {
 };
 
 exports.check_result_match = function (thisResult, thisAward, conn) {
-  var plugin = this;
-  var re = new RegExp(thisAward.value, 'i');
+  let plugin = this;
+  let re = new RegExp(thisAward.value, 'i');
 
-  for (var i=0; i < thisResult.length; i++) {
+  for (let i=0; i < thisResult.length; i++) {
     if (!re.test(thisResult[i])) continue;
     if (conn.results.has('karma', 'awards', thisAward.id)) continue;
 
@@ -274,13 +278,13 @@ exports.check_result_match = function (thisResult, thisAward, conn) {
 };
 
 exports.check_result_length = function (thisResult, thisAward, conn) {
-  var plugin = this;
+  let plugin = this;
 
   for (let j=0; j < thisResult.length; j++) {
-    // var [operator, qty] = thisAward.value.split(/\s+/); // requires node 6
-    var matches = thisAward.value.split(/\s+/);
-    var operator = matches[0];
-    var qty = matches[1];
+    // let [operator, qty] = thisAward.value.split(/\s+/); // requires node 6
+    let matches = thisAward.value.split(/\s+/);
+    let operator = matches[0];
+    let qty = matches[1];
 
     switch (operator) {
       case 'eq':
@@ -305,7 +309,7 @@ exports.check_result_length = function (thisResult, thisAward, conn) {
 };
 
 exports.apply_tarpit = function (connection, hook, score, next) {
-  var plugin = this;
+  let plugin = this;
   if (!plugin.cfg.tarpit) { return next(); } // tarpit disabled in config
 
   // If tarpit is enabled on the reset_transaction hook, Haraka doesn't
@@ -313,30 +317,30 @@ exports.apply_tarpit = function (connection, hook, score, next) {
   if (utils.in_array(hook, ['reset_transaction','queue'])) return next();
 
   // no delay for senders with good karma
-  var k = connection.results.get('karma');
+  let k = connection.results.get('karma');
   if (score === undefined) { score = parseFloat(k.score); }
   if (score >= 0) { return next(); }
 
   // how long to delay?
-  var delay = plugin.tarpit_delay(score, connection, hook, k);
+  let delay = plugin.tarpit_delay(score, connection, hook, k);
   if (!delay) return next();
 
   connection.logdebug(plugin, 'tarpitting '+hook+' for ' + delay + 's');
-  setTimeout(function () {
+  setTimeout(() => {
     connection.logdebug(plugin, 'tarpit '+hook+' end');
     next();
   }, delay * 1000);
 };
 
 exports.tarpit_delay = function (score, connection, hook, k) {
-  var plugin = this;
+  let plugin = this;
 
   if (plugin.cfg.tarpit.delay && parseFloat(plugin.cfg.tarpit.delay)) {
     connection.logdebug(plugin, 'static tarpit');
     return parseFloat(plugin.cfg.tarpit.delay);
   }
 
-  var delay = score * -1;   // progressive tarpit
+  let delay = score * -1;   // progressive tarpit
 
   // detect roaming users based on MSA ports that require auth
   if (utils.in_array(connection.local.port, [587,465]) &&
@@ -344,7 +348,7 @@ exports.tarpit_delay = function (score, connection, hook, k) {
     return plugin.tarpit_delay_msa(connection, delay, k);
   }
 
-  var max = plugin.cfg.tarpit.max || 5;
+  let max = plugin.cfg.tarpit.max || 5;
   if (delay > max) {
     connection.logdebug(plugin, 'tarpit capped to: ' + max);
     return max;
@@ -354,27 +358,27 @@ exports.tarpit_delay = function (score, connection, hook, k) {
 };
 
 exports.tarpit_delay_msa = function (connection, delay, k) {
-  var plugin = this;
-  var trg = 'tarpit reduced for good';
+  let plugin = this;
+  let trg = 'tarpit reduced for good';
 
   delay = parseFloat(delay);
 
   // Reduce delay for good history
-  var history = ((k.good || 0) - (k.bad || 0));
+  let history = ((k.good || 0) - (k.bad || 0));
   if (history > 0) {
     delay = delay - 2;
     connection.logdebug(plugin, trg + ' history: ' + delay);
   }
 
   // Reduce delay for good ASN history
-  var asn = connection.results.get('asn');
+  let asn = connection.results.get('asn');
   if (!asn) { asn = connection.results.get('geoip'); }
   if (asn && asn.asn && k.neighbors > 0) {
     connection.logdebug(plugin, trg + ' neighbors: ' + delay);
     delay = delay - 2;
   }
 
-  var max = plugin.cfg.tarpit.max_msa || 2;
+  let max = plugin.cfg.tarpit.max_msa || 2;
   if (delay > max) {
     connection.logdebug(plugin, 'tarpit capped at: ' + delay);
     delay = max;
@@ -384,21 +388,21 @@ exports.tarpit_delay_msa = function (connection, delay, k) {
 };
 
 exports.should_we_deny = function (next, connection, hook) {
-  var plugin = this;
+  let plugin = this;
 
-  var r = connection.results.get('karma');
+  let r = connection.results.get('karma');
   if (!r) { return next(); }
 
   plugin.check_awards(connection);  // update awards first
 
-  var score = parseFloat(r.score);
+  let score = parseFloat(r.score);
   if (isNaN(score))  {
     connection.logerror(plugin, 'score is NaN');
     connection.results.add(plugin, {score: 0});
     return next();
   }
 
-  var negative_limit = -5;
+  let negative_limit = -5;
   if (plugin.cfg.thresholds && plugin.cfg.thresholds.negative) {
     negative_limit = parseFloat(plugin.cfg.thresholds.negative);
   }
@@ -410,7 +414,7 @@ exports.should_we_deny = function (next, connection, hook) {
     return plugin.apply_tarpit(connection, hook, score, next);
   }
 
-  var rejectMsg = 'very bad karma score: {score}';
+  let rejectMsg = 'very bad karma score: {score}';
   if (plugin.cfg.deny && plugin.cfg.deny.message) {
     rejectMsg = plugin.cfg.deny.message;
   }
@@ -420,19 +424,19 @@ exports.should_we_deny = function (next, connection, hook) {
     rejectMsg = rejectMsg.replace(/\{uuid\}/, connection.uuid);
   }
 
-  return plugin.apply_tarpit(connection, hook, score, function () {
+  return plugin.apply_tarpit(connection, hook, score, () => {
     next(constants.DENY, rejectMsg);
   });
 };
 
 exports.hook_deny = function (next, connection, params) {
-  var plugin = this;
-  // var pi_deny     = params[0];  // (constants.deny, denysoft, ok)
-  // var pi_message  = params[1];
-  var pi_name     = params[2];
-  // var pi_function = params[3];
-  // var pi_params   = params[4];
-  var pi_hook     = params[5];
+  let plugin = this;
+  // let pi_deny     = params[0];  // (constants.deny, denysoft, ok)
+  // let pi_message  = params[1];
+  let pi_name     = params[2];
+  // let pi_function = params[3];
+  // let pi_params   = params[4];
+  let pi_hook     = params[5];
 
   // exceptions, whose 'DENY' should not be captured
   if (pi_name) {
@@ -455,8 +459,8 @@ exports.hook_deny = function (next, connection, params) {
 };
 
 exports.hook_connect = function (next, connection) {
-  var plugin = this;
-  var asnkey = plugin.get_asn_key(connection);
+  let plugin = this;
+  let asnkey = plugin.get_asn_key(connection);
   if (asnkey) {
     plugin.check_asn(connection, asnkey);
   }
@@ -481,13 +485,13 @@ exports.hook_queue = function (next, connection) {
   this.should_we_deny(next, connection, 'queue');
 };
 exports.hook_reset_transaction = function (next, connection) {
-  var plugin = this;
+  let plugin = this;
   connection.results.add(plugin, {emit: true});
   plugin.should_we_deny(next, connection, 'reset_transaction');
 };
 
 exports.hook_unrecognized_command = function (next, connection, cmd) {
-  var plugin = this;
+  let plugin = this;
 
   connection.results.incr(plugin, {score: -1});
   connection.results.add(plugin, {fail: 'cmd:('+cmd+')'});
@@ -496,15 +500,15 @@ exports.hook_unrecognized_command = function (next, connection, cmd) {
 };
 
 exports.ip_history_from_redis = function (next, connection) {
-  var plugin = this;
+  let plugin = this;
 
-  var expire = (plugin.cfg.redis.expire_days || 60) * 86400; // to days
-  var dbkey  = 'karma|' + connection.remote.ip;
+  let expire = (plugin.cfg.redis.expire_days || 60) * 86400; // to days
+  let dbkey  = 'karma|' + connection.remote.ip;
 
   // redis plugin is emitting errors, no need to here
   if (!plugin.db) return next();
 
-  plugin.db.hgetall(dbkey, function (err, dbr) {
+  plugin.db.hgetall(dbkey, (err, dbr) => {
     if (err) {
       connection.results.add(plugin, {err: err});
       return next();
@@ -518,11 +522,11 @@ exports.ip_history_from_redis = function (next, connection) {
     plugin.db.multi()
       .hincrby(dbkey, 'connections', 1)  // increment total conn
       .expire(dbkey, expire)             // extend expiration
-      .exec(function (err2, replies) {
+      .exec((err2, replies) => {
         if (err2) connection.results.add(plugin, {err: err2});
       });
 
-    var results = {
+    let results = {
       good: dbr.good,
       bad: dbr.bad,
       connections: dbr.connections,
@@ -546,12 +550,12 @@ exports.ip_history_from_redis = function (next, connection) {
 };
 
 exports.hook_mail = function (next, connection, params) {
-  var plugin = this;
+  let plugin = this;
 
   plugin.check_spammy_tld(params[0], connection);
 
   // look for invalid (RFC 5321,(2)821) space in envelope from
-  var full_from = connection.current_line;
+  let full_from = connection.current_line;
   if (full_from.toUpperCase().substring(0,11) !== 'MAIL FROM:<') {
     connection.loginfo(plugin, 'RFC ignorant env addr format: ' + full_from);
     connection.results.add(plugin, {fail: 'rfc5321.MailFrom'});
@@ -561,15 +565,15 @@ exports.hook_mail = function (next, connection, params) {
 };
 
 exports.hook_rcpt = function (next, connection, params) {
-  var plugin = this;
-  var rcpt = params[0];
+  let plugin = this;
+  let rcpt = params[0];
 
   // hook_rcpt    catches recipients that no rcpt_to plugin permitted
   // hook_rcpt_ok catches accepted recipients
 
   // odds of from_user=rcpt_user in ham: < 1%, in spam > 40%
   // 2015-05 30-day sample: 84% spam correlation
-  var txn = connection.transaction;
+  let txn = connection.transaction;
   if (txn && txn.mail_from && txn.mail_from.user === rcpt.user) {
     connection.results.add(plugin, {fail: 'env_user_match'});
   }
@@ -582,9 +586,9 @@ exports.hook_rcpt = function (next, connection, params) {
 };
 
 exports.hook_rcpt_ok = function (next, connection, rcpt) {
-  var plugin = this;
+  let plugin = this;
 
-  var txn = connection.transaction;
+  let txn = connection.transaction;
   if (txn && txn.mail_from && txn.mail_from.user === rcpt.user) {
     connection.results.add(plugin, {fail: 'env_user_match'});
   }
@@ -596,11 +600,11 @@ exports.hook_rcpt_ok = function (next, connection, rcpt) {
 
 exports.hook_data_post = function (next, connection) {
   // goal: prevent delivery of spam before queue
-  var plugin = this;
+  let plugin = this;
 
   plugin.check_awards(connection);  // update awards
 
-  var results = connection.results.collate(plugin);
+  let results = connection.results.collate(plugin);
   connection.logdebug(plugin, 'adding header: ' + results);
   connection.transaction.add_header('X-Haraka-Karma', results);
 
@@ -608,21 +612,21 @@ exports.hook_data_post = function (next, connection) {
 };
 
 exports.increment = function (connection, key, val) {
-  var plugin = this;
+  let plugin = this;
   if (!plugin.db) return;
 
   plugin.db.hincrby('karma|' + connection.remote.ip, key, 1);
 
-  var asnkey = plugin.get_asn_key(connection);
+  let asnkey = plugin.get_asn_key(connection);
   if (asnkey) plugin.db.hincrby(asnkey, key, 1);
 };
 
 exports.hook_disconnect = function (next, connection) {
-  var plugin = this;
+  let plugin = this;
 
   plugin.redis_unsubscribe(connection);
 
-  var k = connection.results.get('karma');
+  let k = connection.results.get('karma');
   if (!k || k.score === undefined) {
     connection.results.add(plugin, {err: 'karma results missing'});
     return next();
@@ -646,16 +650,16 @@ exports.hook_disconnect = function (next, connection) {
 };
 
 exports.get_award_loc_from_note = function (connection, award) {
-  var plugin = this;
+  let plugin = this;
 
   if (connection.transaction) {
-    var obj = plugin.assemble_note_obj(connection.transaction, award);
+    let obj = plugin.assemble_note_obj(connection.transaction, award);
     if (obj) { return obj; }
   }
 
   // connection.logdebug(plugin, 'no txn note: ' + award);
-  obj = plugin.assemble_note_obj(connection, award);
-  if (obj) { return obj; }
+  let obj = plugin.assemble_note_obj(connection, award);
+  if (obj) return obj;
 
   // connection.logdebug(plugin, 'no conn note: ' + award);
   return;
@@ -663,8 +667,8 @@ exports.get_award_loc_from_note = function (connection, award) {
 
 exports.get_award_loc_from_results = function (connection, loc_bits) {
 
-  var pi_name = loc_bits[1];
-  var notekey = loc_bits[2];
+  let pi_name = loc_bits[1];
+  let notekey = loc_bits[2];
 
   if (phase_prefixes[pi_name]) {
     pi_name = loc_bits[1] + '.' + loc_bits[2];
@@ -691,9 +695,9 @@ exports.get_award_loc_from_results = function (connection, loc_bits) {
 
 exports.get_award_location = function (connection, award_key) {
   // based on award key, find the requested note or result
-  var plugin = this;
-  var bits = award_key.split('@');
-  var loc_bits = bits[0].split('.');
+  let plugin = this;
+  let bits = award_key.split('@');
+  let loc_bits = bits[0].split('.');
   if (loc_bits.length === 1) {          // ex: relaying
     return connection[bits[0]];
   }
@@ -718,11 +722,11 @@ exports.get_award_location = function (connection, award_key) {
 };
 
 exports.get_award_condition = function (note_key, note_val) {
-  var wants;
-  var keybits = note_key.split('@');
+  let wants;
+  let keybits = note_key.split('@');
   if (keybits[1]) { wants = keybits[1]; }
 
-  var valbits = note_val.split(/\s+/);
+  let valbits = note_val.split(/\s+/);
   if (!valbits[1]) { return wants; }
   if (valbits[1] !== 'if') { return wants; }  // no if condition
 
@@ -733,25 +737,25 @@ exports.get_award_condition = function (note_key, note_val) {
 };
 
 exports.check_awards = function (connection) {
-  var plugin = this;
-  var karma  = connection.results.get('karma');
+  let plugin = this;
+  let karma  = connection.results.get('karma');
   if (!karma     ) return;
   if (!karma.todo) return;
 
-  for (var key in karma.todo) {
+  for (let key in karma.todo) {
     //     loc                     =     terms
     // note_location [@wants]      = award [conditions]
     // results.geoip.too_far       = -1
     // results.geoip.distance@4000 = -1 if gt 4000
-    var award_terms = karma.todo[key];
+    let award_terms = karma.todo[key];
 
-    var note = plugin.get_award_location(connection, key);
+    let note = plugin.get_award_location(connection, key);
     if (note === undefined) { continue; }
-    var wants = plugin.get_award_condition(key, award_terms);
+    let wants = plugin.get_award_condition(key, award_terms);
 
     // test the desired condition
-    var bits = award_terms.split(/\s+/);
-    var award = parseFloat(bits[0]);
+    let bits = award_terms.split(/\s+/);
+    let award = parseFloat(bits[0]);
     if (!bits[1] || bits[1] !== 'if') {    // no if conditions
       if (!note) { continue; }             // failed truth test
       if (!wants) {                        // no wants, truth matches
@@ -767,7 +771,7 @@ exports.check_awards = function (connection) {
 
     // the matching logic here is inverted, weeding out misses (continue)
     // Matches fall through (break) to the apply_award below.
-    var condition = bits[2];
+    let condition = bits[2];
     switch (condition) {
       case 'equals':
         if (wants != note) continue;
@@ -805,7 +809,7 @@ exports.check_awards = function (connection) {
         }
         break;
       case 'in':              // if in pass whitelisted
-        // var list = bits[3];
+        // let list = bits[3];
         if (bits[4]) { wants = bits[4]; }
         if (!Array.isArray(note)) { continue; }
         if (!wants) { continue; }
@@ -820,7 +824,7 @@ exports.check_awards = function (connection) {
 };
 
 exports.apply_award = function (connection, nl, award) {
-  var plugin = this;
+  let plugin = this;
   if (!award) { return; }
   if (isNaN(award)) {    // garbage in config
     connection.logerror(plugin, 'non-numeric award from: ' + nl + ':' +
@@ -828,12 +832,12 @@ exports.apply_award = function (connection, nl, award) {
     return;
   }
 
-  var bits = nl.split('@'); nl = bits[0];  // strip off @... if present
+  let bits = nl.split('@'); nl = bits[0];  // strip off @... if present
 
   connection.results.incr(plugin, {score: award});
   connection.logdebug(plugin, 'applied ' + nl + ':' + award);
 
-  var trimmed = nl.substring(0, 5) === 'notes' ? nl.substring(6) :
+  let trimmed = nl.substring(0, 5) === 'notes' ? nl.substring(6) :
     nl.substring(0, 7) === 'results' ? nl.substring(8) :
       nl.substring(0,19) === 'transaction.results' ?
         nl.substring(20) : nl;
@@ -848,14 +852,14 @@ exports.apply_award = function (connection, nl, award) {
 };
 
 exports.check_spammy_tld = function (mail_from, connection) {
-  var plugin = this;
+  let plugin = this;
   if (!plugin.cfg.spammy_tlds) { return; }
   if (mail_from.isNull()) { return; }         // null sender (bounce)
 
-  var from_tld = mail_from.host.split('.').pop();
+  let from_tld = mail_from.host.split('.').pop();
   // connection.logdebug(plugin, 'from_tld: ' + from_tld);
 
-  var tld_penalty = parseFloat(plugin.cfg.spammy_tlds[from_tld] || 0);
+  let tld_penalty = parseFloat(plugin.cfg.spammy_tlds[from_tld] || 0);
   if (tld_penalty === 0) { return; }
 
   connection.results.incr(plugin, {score: tld_penalty});
@@ -863,10 +867,10 @@ exports.check_spammy_tld = function (mail_from, connection) {
 };
 
 exports.check_syntax_RcptTo = function (connection) {
-  var plugin = this;
+  let plugin = this;
 
   // look for an illegal (RFC 5321,(2)821) space in envelope recipient
-  var full_rcpt = connection.current_line;
+  let full_rcpt = connection.current_line;
   if (full_rcpt.toUpperCase().substring(0,9) === 'RCPT TO:<') { return; }
 
   connection.loginfo(plugin, 'illegal envelope address format: ' +
@@ -875,10 +879,10 @@ exports.check_syntax_RcptTo = function (connection) {
 };
 
 exports.assemble_note_obj = function (prefix, key) {
-  var note = prefix;
-  var parts = key.split('.');
+  let note = prefix;
+  let parts = key.split('.');
   while (parts.length > 0) {
-    var next = parts.shift();
+    let next = parts.shift();
     if (phase_prefixes[next]) {
       next = next + '.' + parts.shift();
     }
@@ -889,30 +893,30 @@ exports.assemble_note_obj = function (prefix, key) {
 };
 
 exports.check_asn = function (connection, asnkey) {
-  var plugin = this;
+  let plugin = this;
   if (!plugin.db) return;
 
-  var report_as = { name: plugin.name };
+  let report_as = { name: plugin.name };
 
   if (plugin.cfg.asn.report_as) {
     report_as.name = plugin.cfg.asn.report_as;
   }
 
-  plugin.db.hgetall(asnkey, function (err, res) {
+  plugin.db.hgetall(asnkey, (err, res) => {
     if (err) {
       connection.results.add(plugin, {err: err});
       return;
     }
 
     if (res === null) {
-      var expire = (plugin.cfg.redis.expire_days || 60) * 86400; // days
+      let expire = (plugin.cfg.redis.expire_days || 60) * 86400; // days
       plugin.init_asn(asnkey, expire);
       return;
     }
 
     plugin.db.hincrby(asnkey, 'connections', 1);
-    var asn_score = parseInt(res.good || 0) - (res.bad || 0);
-    var asn_results = {
+    let asn_score = parseInt(res.good || 0) - (res.bad || 0);
+    let asn_results = {
       asn_score: asn_score,
       asn_connections: res.connections,
       asn_good: res.good,
@@ -941,7 +945,7 @@ exports.check_asn = function (connection, asnkey) {
 };
 
 exports.init_ip = function (dbkey, rip, expire) {
-  var plugin = this;
+  let plugin = this;
   if (!plugin.db) return;
   plugin.db.multi()
     .hmset(dbkey, {'bad': 0, 'good': 0, 'connections': 1})
@@ -950,9 +954,9 @@ exports.init_ip = function (dbkey, rip, expire) {
 };
 
 exports.get_asn_key = function (connection) {
-  var plugin = this;
+  let plugin = this;
   if (!plugin.cfg.asn.enable) { return; }
-  var asn = connection.results.get('asn');
+  let asn = connection.results.get('asn');
   if (!asn || !asn.asn) {
     asn = connection.results.get('geoip');
   }
@@ -961,7 +965,7 @@ exports.get_asn_key = function (connection) {
 };
 
 exports.init_asn = function (asnkey, expire) {
-  var plugin = this;
+  let plugin = this;
   if (!plugin.db) return;
   plugin.db.multi()
     .hmset(asnkey, {'bad': 0, 'good': 0, 'connections': 1})

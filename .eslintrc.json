@@ -1,10 +1,15 @@
 {
+  "env": {
+    "es6": true,
+    "node": true
+  },
   "plugins": [
     "haraka"
   ],
   "extends": [ "eslint:recommended", "plugin:haraka/recommended" ],
   "root": true,
   "rules": {
-    "indent": [2, 2, {"SwitchCase": 1}]
+    "indent": [2, 2, {"SwitchCase": 1}],
+    "no-unused-vars": ["error", { "vars": "all", "args": "none" } ]
   }
 }
