@@ -1,4 +1,5 @@
 [![Build Status][ci-img]][ci-url]
+[![Windows Build Status][ci-win-img]][ci-win-url]
 [![Code Climate][clim-img]][clim-url]
 [![Greenkeeper badge][gk-img]][gk-url]
 [![NPM][npm-img]][npm-url]
@@ -204,6 +205,8 @@ Expect to use karma *with* content filters.
 
 [ci-img]: https://travis-ci.org/haraka/haraka-plugin-karma.svg
 [ci-url]: https://travis-ci.org/haraka/haraka-plugin-karma
+[ci-win-img]: https://ci.appveyor.com/api/projects/status/eut008hijj7gt995?svg=true
+[ci-win-url]: https://ci.appveyor.com/project/msimerson/haraka-plugin-karma
 [cov-img]: https://codecov.io/github/haraka/haraka-plugin-karma/coverage.svg
 [cov-url]: https://codecov.io/github/haraka/haraka-plugin-karma
 [clim-img]: https://codeclimate.com/github/haraka/haraka-plugin-karma/badges/gpa.svg

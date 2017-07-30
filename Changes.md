@@ -1,4 +1,9 @@
 
+## 1.0.9 - 2017-07-29
+
+- splash on some es6
+- add AppVeyor CI testing
+
 ## 1.0.8 - 2017-06-26
 
 - revert #9, it breaks current Haraka deployments
