@@ -1,7 +1,7 @@
 {
   "name": "haraka-plugin-karma",
-  "version": "1.0.9",
-  "description": "Watch live SMTP traffic in a web interface",
+  "version": "1.0.10",
+  "description": "A heuristics scoring and reputation engine for SMTP connections",
   "main": "index.js",
   "scripts": {
     "test": "node run_tests",

@@ -1,4 +1,8 @@
 
+## 1.0.10 - 2017-08-30
+
+- add TLS awards #19
+
 ## 1.0.9 - 2017-07-29
 
 - splash on some es6
