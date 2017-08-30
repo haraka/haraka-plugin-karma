@@ -561,6 +561,16 @@ exports.hook_mail = function (next, connection, params) {
     connection.results.add(plugin, {fail: 'rfc5321.MailFrom'});
   }
 
+  // apply TLS awards (if defined)
+  if (plugin.cfg.tls !== undefined) {
+    if (plugin.cfg.tls.set && connection.tls.enabled) {
+      connection.results.incr(plugin, {score: plugin.cfg.tls.set});
+    }
+    if (plugin.cfg.tls.unset && !connection.tls.enabled) {
+      connection.results.incr(plugin, {score: plugin.cfg.tls.unset});
+    }
+  }
+
   return plugin.should_we_deny(next, connection, 'mail');
 };
 
@@ -606,6 +616,7 @@ exports.hook_data_post = function (next, connection) {
 
   let results = connection.results.collate(plugin);
   connection.logdebug(plugin, 'adding header: ' + results);
+  connection.transaction.remove_header('X-Haraka-Karma');
   connection.transaction.add_header('X-Haraka-Karma', results);
 
   return plugin.should_we_deny(next, connection, 'data_post');
