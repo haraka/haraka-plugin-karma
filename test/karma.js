@@ -675,3 +675,41 @@ exports.check_spammy_tld = {
     test.done();
   },
 }
+
+exports.tls = {
+  setUp : _set_up,
+  'unconfigured TLS does nothing': function (test) {
+    test.expect(1);
+    this.connection.tls.enabled=true;
+    var mfrom = new Address('spamy@er7diogt.rrnsale.top');
+    this.connection.current_line="MAIL FROM:<foo@test.com>";
+    this.plugin.hook_mail(() => {
+      test.equals(this.connection.results.store.karma, undefined);
+      test.done();
+    }, this.connection, [mfrom]);
+  },
+  'TLS is scored': function (test) {
+    test.expect(1);
+    this.plugin.cfg.tls = { set: 2, unset: -4 };
+    this.connection.tls.enabled=true;
+    var mfrom = new Address('spamy@er7diogt.rrnsale.top');
+    this.connection.current_line="MAIL FROM:<foo@test.com>";
+    this.plugin.hook_mail(() => {
+      // console.log(this.connection.results.store);
+      test.equals(this.connection.results.store.karma.score, 2);
+      test.done();
+    }, this.connection, [mfrom]);
+  },
+  'no TLS is scored': function (test) {
+    test.expect(1);
+    this.plugin.cfg.tls = { set: 2, unset: -4 };
+    this.connection.tls.enabled=false;
+    var mfrom = new Address('spamy@er7diogt.rrnsale.top');
+    this.connection.current_line="MAIL FROM:<foo@test.com>";
+    this.plugin.hook_mail(() => {
+      // console.log(this.connection.results.store);
+      test.equals(this.connection.results.store.karma.score, -4);
+      test.done();
+    }, this.connection, [mfrom]);
+  },
+}
