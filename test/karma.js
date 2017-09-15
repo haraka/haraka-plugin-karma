@@ -1,12 +1,12 @@
 'use strict';
 
-var Address      = require('address-rfc2821').Address;
-var fixtures     = require('haraka-test-fixtures');
-var constants    = require('haraka-constants');
+const Address      = require('address-rfc2821').Address;
+const fixtures     = require('haraka-test-fixtures');
+const constants    = require('haraka-constants');
 
-var stub         = fixtures.stub.stub;
+const stub         = fixtures.stub.stub;
 
-var _set_up = function (done) {
+const _set_up = function (done) {
 
   this.plugin = new fixtures.plugin('karma');
 
@@ -38,13 +38,13 @@ exports.results_init = {
   setUp : _set_up,
   'init, pre': function (test) {
     test.expect(1);
-    var r = this.connection.results.get('karma');
+    const r = this.connection.results.get('karma');
     test.equal(undefined, r);
     test.done();
   },
   'init, empty cfg': function (test) {
     this.plugin.results_init(stub, this.connection);
-    var r = this.connection.results.get('karma');
+    const r = this.connection.results.get('karma');
     test.expect(1);
     test.ok(r);
     test.done();
@@ -52,7 +52,7 @@ exports.results_init = {
   'init, cfg': function (test) {
     this.plugin.cfg.awards = { test: 1 };
     this.plugin.results_init(stub, this.connection);
-    var r = this.connection.results.get('karma');
+    const r = this.connection.results.get('karma');
     test.expect(2);
     test.ok(r);
     test.ok(r.todo);
@@ -64,14 +64,14 @@ exports.assemble_note_obj = {
   setUp : _set_up,
   'no auth fails': function (test) {
     test.expect(1);
-    var obj = this.plugin.assemble_note_obj(this.connection, 'notes.auth_fails');
+    const obj = this.plugin.assemble_note_obj(this.connection, 'notes.auth_fails');
     test.equal(undefined, obj);
     test.done();
   },
   'has auth fails': function (test) {
     test.expect(1);
     this.connection.notes.auth_fails=[1,2];
-    var obj = this.plugin.assemble_note_obj(this.connection, 'notes.auth_fails');
+    const obj = this.plugin.assemble_note_obj(this.connection, 'notes.auth_fails');
     test.deepEqual([1,2], obj);
     test.done();
   },
@@ -81,7 +81,7 @@ exports.hook_deny = {
   setUp : _set_up,
   'no params': function (test) {
     test.expect(1);
-    var next = function (rc) {
+    const next = function (rc) {
       test.equal(constants.OK, rc, rc);
       test.done();
     };
@@ -89,7 +89,7 @@ exports.hook_deny = {
   },
   'pi_name=karma': function (test) {
     test.expect(1);
-    var next = function (rc) {
+    const next = function (rc) {
       test.equal(undefined, rc);
       test.done();
     };
@@ -97,7 +97,7 @@ exports.hook_deny = {
   },
   'pi_name=access': function (test) {
     test.expect(1);
-    var next = function (rc) {
+    const next = function (rc) {
       test.equal(undefined, rc);
       test.done();
     };
@@ -106,7 +106,7 @@ exports.hook_deny = {
   },
   'pi_hook=rcpt_to': function (test) {
     test.expect(1);
-    var next = function (rc) {
+    const next = function (rc) {
       test.equal(undefined, rc);
       test.done();
     };
@@ -116,7 +116,7 @@ exports.hook_deny = {
   },
   'pi_hook=queue': function (test) {
     test.expect(1);
-    var next = function (rc) {
+    const next = function (rc) {
       test.equal(undefined, rc);
       test.done();
     };
@@ -125,7 +125,7 @@ exports.hook_deny = {
   },
   'denysoft': function (test) {
     test.expect(1);
-    var next = function (rc) {
+    const next = function (rc) {
       test.equal(constants.OK, rc);
       test.done();
     };
@@ -138,34 +138,34 @@ exports.get_award_location = {
   'relaying=false': function (test) {
     test.expect(1);
     this.connection.relaying=false;
-    var r = this.plugin.get_award_location(this.connection, 'relaying');
+    const r = this.plugin.get_award_location(this.connection, 'relaying');
     test.equal(false, r);
     test.done();
   },
   'relaying=true': function (test) {
     test.expect(1);
     this.connection.relaying=true;
-    var r = this.plugin.get_award_location(this.connection, 'relaying');
+    const r = this.plugin.get_award_location(this.connection, 'relaying');
     test.equal(true, r);
     test.done();
   },
   'notes.undef=2': function (test) {
     test.expect(1);
-    var r = this.plugin.get_award_location(this.connection, 'notes.undef');
+    const r = this.plugin.get_award_location(this.connection, 'notes.undef');
     test.equal(undefined, r);
     test.done();
   },
   'notes.tarpit=2': function (test) {
     test.expect(1);
     this.connection.notes = { tarpit: 2 };
-    var r = this.plugin.get_award_location(this.connection, 'notes.tarpit');
+    const r = this.plugin.get_award_location(this.connection, 'notes.tarpit');
     test.equal(2, r);
     test.done();
   },
   'results.geoip': function (test) {
     test.expect(1);
     this.connection.results.add('geoip', { country: 'US' });
-    var r = this.plugin.get_award_location(this.connection, 'results.geoip');
+    const r = this.plugin.get_award_location(this.connection, 'results.geoip');
     // console.log(r);
     test.equal('US', r.country);
     test.done();
@@ -173,7 +173,7 @@ exports.get_award_location = {
   'results.karma': function (test) {
     test.expect(1);
     this.connection.results.add('karma', { score: -1 });
-    var r = this.plugin.get_award_location(this.connection, 'results.karma');
+    const r = this.plugin.get_award_location(this.connection, 'results.karma');
     // console.log(r);
     test.equal(-1, r.score);
     test.done();
@@ -182,7 +182,7 @@ exports.get_award_location = {
     // results should be found in conn or txn
     test.expect(1);
     this.connection.transaction.results.add('karma', { score: -1 });
-    var r = this.plugin.get_award_location(this.connection, 'results.karma');
+    const r = this.plugin.get_award_location(this.connection, 'results.karma');
     // console.log(r);
     test.equal(-1, r.score);
     test.done();
@@ -191,7 +191,7 @@ exports.get_award_location = {
     // these results shouldn't be found, b/c txn specified
     test.expect(1);
     this.connection.results.add('karma', { score: -1 });
-    var r = this.plugin.get_award_location(this.connection, 'transaction.results.karma');
+    const r = this.plugin.get_award_location(this.connection, 'transaction.results.karma');
     // console.log(r);
     test.equal(undefined, r);
     test.done();
@@ -199,7 +199,7 @@ exports.get_award_location = {
   'results.auth/auth_base': function (test) {
     test.expect(1);
     this.connection.results.add('auth/auth_base', { fail: 'PLAIN' });
-    var r = this.plugin.get_award_location(this.connection, 'results.auth/auth_base');
+    const r = this.plugin.get_award_location(this.connection, 'results.auth/auth_base');
     test.equal('PLAIN', r.fail[0]);
     test.done();
   },
@@ -230,14 +230,14 @@ exports.check_awards = {
   setUp : _set_up,
   'no results': function (test) {
     test.expect(1);
-    var r = this.plugin.check_awards(this.connection);
+    const r = this.plugin.check_awards(this.connection);
     test.equal(undefined, r);
     test.done();
   },
   'no todo': function (test) {
     test.expect(1);
     this.connection.results.add('karma', { todo: { } });
-    var r = this.plugin.check_awards(this.connection);
+    const r = this.plugin.check_awards(this.connection);
     test.equal(undefined, r);
     test.done();
   },
@@ -270,7 +270,7 @@ exports.check_awards = {
     });
     this.connection.results.add('auth/auth_base',
       {fail: 'PLAIN'});
-    var r = this.plugin.check_awards(this.connection);
+    const r = this.plugin.check_awards(this.connection);
     test.equal(undefined, r);
     test.equal('auth/auth_base.fail', this.connection.results.get('karma').fail[0]);
     test.done();
@@ -281,7 +281,7 @@ exports.check_awards = {
       todo: { 'results.rcpt_to.qmd.pass@exist': '1 if in' }
     });
     this.connection.results.add('rcpt_to.qmd', {pass: 'exist'});
-    var r = this.plugin.check_awards(this.connection);
+    const r = this.plugin.check_awards(this.connection);
     test.equal(undefined, r);
     test.equal('qmd.pass', this.connection.results.get('karma').pass[0]);
     test.done();
@@ -292,7 +292,7 @@ exports.apply_tarpit = {
   setUp : _set_up,
   'tarpit=false': function (test) {
     test.expect(2);
-    var next = function (rc, msg) {
+    const next = function (rc, msg) {
       test.equal(undefined, rc);
       test.equal(undefined, msg);
       test.done();
@@ -301,7 +301,7 @@ exports.apply_tarpit = {
   },
   'tarpit=true, score=0': function (test) {
     test.expect(2);
-    var next = function (rc, msg) {
+    const next = function (rc, msg) {
       test.equal(undefined, rc);
       test.equal(undefined, msg);
       test.done();
@@ -311,7 +311,7 @@ exports.apply_tarpit = {
   },
   'tarpit=true, score=1': function (test) {
     test.expect(2);
-    var next = function (rc, msg) {
+    const next = function (rc, msg) {
       test.equal(undefined, rc);
       test.equal(undefined, msg);
       test.done();
@@ -321,8 +321,8 @@ exports.apply_tarpit = {
   },
   'tarpit=true, score=-1': function (test) {
     test.expect(3);
-    var before = Date.now();
-    var next = function (rc, msg) {
+    const before = Date.now();
+    const next = function (rc, msg) {
       test.ok(Date.now() >= before + 1);
       test.equal(undefined, rc);
       test.equal(undefined, msg);
@@ -333,8 +333,8 @@ exports.apply_tarpit = {
   },
   'tarpit=true, score=-2, max=1': function (test) {
     test.expect(3);
-    var before = Date.now();
-    var next = function (rc, msg) {
+    const before = Date.now();
+    const next = function (rc, msg) {
       test.ok(Date.now() >= before + 1);
       test.equal(undefined, rc);
       test.equal(undefined, msg);
@@ -345,8 +345,8 @@ exports.apply_tarpit = {
   },
   'tarpit=true, score=connect, max=1': function (test) {
     test.expect(3);
-    var before = Date.now();
-    var next = function (rc, msg) {
+    const before = Date.now();
+    const next = function (rc, msg) {
       test.ok(Date.now() >= before + 1);
       test.equal(undefined, rc);
       test.equal(undefined, msg);
@@ -362,7 +362,7 @@ exports.should_we_deny = {
   setUp : _set_up,
   'no results': function (test) {
     test.expect(2);
-    var next = function (rc, msg) {
+    const next = function (rc, msg) {
       test.equal(undefined, rc);
       test.equal(undefined, msg);
       test.done();
@@ -371,7 +371,7 @@ exports.should_we_deny = {
   },
   'no score': function (test) {
     test.expect(2);
-    var next = function (rc, msg) {
+    const next = function (rc, msg) {
       test.equal(undefined, rc);
       test.equal(undefined, msg);
       test.done();
@@ -381,7 +381,7 @@ exports.should_we_deny = {
   },
   'invalid score': function (test) {
     test.expect(2);
-    var next = function (rc, msg) {
+    const next = function (rc, msg) {
       test.equal(undefined, rc);
       test.equal(undefined, msg);
       test.done();
@@ -391,7 +391,7 @@ exports.should_we_deny = {
   },
   'valid score, okay': function (test) {
     test.expect(2);
-    var next = function (rc, msg) {
+    const next = function (rc, msg) {
       test.equal(undefined, rc);
       test.equal(undefined, msg);
       test.done();
@@ -402,7 +402,7 @@ exports.should_we_deny = {
   },
   'valid score, -6, deny_hook': function (test) {
     test.expect(2);
-    var next = function (rc, msg) {
+    const next = function (rc, msg) {
       test.equal(constants.DENY, rc);
       test.ok(msg);
       test.done();
@@ -414,7 +414,7 @@ exports.should_we_deny = {
   },
   'valid score, -6, pass_hook': function (test) {
     test.expect(2);
-    var next = function (rc, msg) {
+    const next = function (rc, msg) {
       test.equal(undefined, rc);
       test.equal(undefined, msg);
       test.done();
@@ -430,7 +430,7 @@ exports.check_result_equal = {
   setUp : _set_up,
   'equal match is scored': function (test) {
     test.expect(2);
-    var award = {
+    const award = {
       id         : 1,           award      : 2,
       operator   : 'equals',    value      : 'clean',
       reason     : 'testing',   resolution : 'never',
@@ -442,7 +442,7 @@ exports.check_result_equal = {
   },
   'not equal match is not scored': function (test) {
     test.expect(1);
-    var award = {
+    const award = {
       id         : 1,           award      : 2,
       operator   : 'equals',    value      : 'dirty',
       reason     : 'testing',   resolution : 'never',
@@ -457,7 +457,7 @@ exports.check_result_gt = {
   setUp : _set_up,
   'gt match is scored': function (test) {
     test.expect(2);
-    var award = {
+    const award = {
       id         : 5,           award      : 3,
       operator   : 'gt',        value      : 3,
       reason     : 'testing',   resolution : 'never',
@@ -474,7 +474,7 @@ exports.check_result_lt = {
   setUp : _set_up,
   'lt match is scored': function (test) {
     test.expect(2);
-    var award = {
+    const award = {
       id         : 2,           award      : 3,
       operator   : 'lt',        value      : 5,
       reason     : 'testing',   resolution : 'never',
@@ -487,7 +487,7 @@ exports.check_result_lt = {
   },
   'lt match not scored': function (test) {
     test.expect(1);
-    var award = {
+    const award = {
       id         : 3,           award      : 3,
       operator   : 'lt',        value      : 3,
       reason     : 'testing',   resolution : 'never',
@@ -503,7 +503,7 @@ exports.check_result_match = {
   setUp : _set_up,
   'match pattern is scored': function (test) {
     test.expect(2);
-    var award = {
+    const award = {
       id         : 1,           award      : 2,
       operator   : 'match',     value      : 'phish',
       reason     : 'testing',   resolution : 'never',
@@ -516,7 +516,7 @@ exports.check_result_match = {
   },
   'mismatch is not scored': function (test) {
     test.expect(1);
-    var award = {
+    const award = {
       id         : 1,           award      : 2,
       operator   : 'match',     value      : 'dirty',
       reason     : 'testing',   resolution : 'never',
@@ -528,7 +528,7 @@ exports.check_result_match = {
   },
   'FCrDNS match is scored': function (test) {
     test.expect(2);
-    var award = {
+    const award = {
       id         : 89,         award      : 2,
       operator   : 'match',     value      : 'google.com',
       reason     : 'testing',   resolution : 'never',
@@ -545,7 +545,7 @@ exports.check_result_length = {
   setUp : _set_up,
   'eq pattern is scored': function (test) {
     test.expect(2);
-    var award = {
+    const award = {
       id         : 1,           award      : 2,
       operator   : 'length',    value      : 'eq 3',
       reason     : 'testing',   resolution : 'hah',
@@ -558,7 +558,7 @@ exports.check_result_length = {
   },
   'eq pattern is not scored': function (test) {
     test.expect(1);
-    var award = {
+    const award = {
       id         : 1,           award      : 2,
       operator   : 'length',    value      : 'eq 3',
       reason     : 'testing',   resolution : 'hah',
@@ -570,7 +570,7 @@ exports.check_result_length = {
   },
   'gt pattern is scored': function (test) {
     test.expect(2);
-    var award = {
+    const award = {
       id         : 1,           award      : 2,
       operator   : 'length',    value      : 'gt 3',
       reason     : 'testing',   resolution : 'hah',
@@ -583,7 +583,7 @@ exports.check_result_length = {
   },
   'gt pattern is not scored': function (test) {
     test.expect(1);
-    var award = {
+    const award = {
       id         : 1,           award      : 2,
       operator   : 'length',    value      : 'gt 3',
       reason     : 'testing',   resolution : 'hah',
@@ -595,7 +595,7 @@ exports.check_result_length = {
   },
   'lt pattern is scored': function (test) {
     test.expect(2);
-    var award = {
+    const award = {
       id         : 1,           award      : 2,
       operator   : 'length',    value      : 'lt 3',
       reason     : 'testing',   resolution : 'hah',
@@ -608,7 +608,7 @@ exports.check_result_length = {
   },
   'lt pattern is not scored': function (test) {
     test.expect(1);
-    var award = {
+    const award = {
       id         : 1,           award      : 2,
       operator   : 'length',    value      : 'lt 3',
       reason     : 'testing',   resolution : 'hah',
@@ -657,7 +657,7 @@ exports.check_spammy_tld = {
   'spammy TLD is scored: top': function (test) {
     test.expect(2);
     this.plugin.cfg.spammy_tlds = { top: -3 };
-    var mfrom = new Address('spamy@er7diogt.rrnsale.top');
+    const mfrom = new Address('spamy@er7diogt.rrnsale.top');
     this.plugin.check_spammy_tld(mfrom, this.connection);
     // console.log(this.connection.results.store);
     test.equals(this.connection.results.store.karma.score, -3);
@@ -667,7 +667,7 @@ exports.check_spammy_tld = {
   'spammy TLD is scored: rocks': function (test) {
     test.expect(2);
     this.plugin.cfg.spammy_tlds = { rocks: '-2' };
-    var mfrom = new Address('spamy@foo.rocks');
+    const mfrom = new Address('spamy@foo.rocks');
     this.plugin.check_spammy_tld(mfrom, this.connection);
     // console.log(this.connection.results.store);
     test.equals(this.connection.results.store.karma.score, -2);
@@ -681,7 +681,7 @@ exports.tls = {
   'unconfigured TLS does nothing': function (test) {
     test.expect(1);
     this.connection.tls.enabled=true;
-    var mfrom = new Address('spamy@er7diogt.rrnsale.top');
+    const mfrom = new Address('spamy@er7diogt.rrnsale.top');
     this.connection.current_line="MAIL FROM:<foo@test.com>";
     this.plugin.hook_mail(() => {
       test.equals(this.connection.results.store.karma, undefined);
@@ -692,7 +692,7 @@ exports.tls = {
     test.expect(1);
     this.plugin.cfg.tls = { set: 2, unset: -4 };
     this.connection.tls.enabled=true;
-    var mfrom = new Address('spamy@er7diogt.rrnsale.top');
+    const mfrom = new Address('spamy@er7diogt.rrnsale.top');
     this.connection.current_line="MAIL FROM:<foo@test.com>";
     this.plugin.hook_mail(() => {
       // console.log(this.connection.results.store);
@@ -704,7 +704,7 @@ exports.tls = {
     test.expect(1);
     this.plugin.cfg.tls = { set: 2, unset: -4 };
     this.connection.tls.enabled=false;
-    var mfrom = new Address('spamy@er7diogt.rrnsale.top');
+    const mfrom = new Address('spamy@er7diogt.rrnsale.top');
     this.connection.current_line="MAIL FROM:<foo@test.com>";
     this.plugin.hook_mail(() => {
       // console.log(this.connection.results.store);
