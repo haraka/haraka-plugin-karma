@@ -58,6 +58,22 @@ exports.results_init = {
     test.ok(r.todo);
     test.done();
   },
+  'init, skip': function (test) {
+    this.connection.remote.is_private = true;
+    this.plugin.results_init(stub, this.connection);
+    const r = this.connection.results.get('karma');
+    test.expect(1);
+    test.equal(undefined, r);
+    test.done();
+  },
+  'init, private skip': function (test) {
+    this.connection.notes.disable_karma = true;
+    this.plugin.results_init(stub, this.connection);
+    const r = this.connection.results.get('karma');
+    test.expect(1);
+    test.equal(undefined, r);
+    test.done();
+  },
 };
 
 exports.assemble_note_obj = {
@@ -713,3 +729,49 @@ exports.tls = {
     }, this.connection, [mfrom]);
   },
 }
+
+exports.skiping_hooks = {
+  setUp : _set_up,
+  'notes.disable_karma': function (test) {
+    test.expect(9);
+    const next = function (rc) {
+      test.equal(undefined, rc);
+    };
+    const last = function (rc) {
+      test.equal(undefined, rc);
+      test.done();
+    };
+    this.connection.notes.disable_karma = true;
+
+    this.plugin.hook_deny(next, this.connection);
+    this.plugin.hook_connect(next, this.connection);
+    this.plugin.hook_ehlo(next, this.connection);
+    this.plugin.hook_vrfy(next, this.connection);
+    this.plugin.hook_noop(next, this.connection);
+    this.plugin.hook_data(next, this.connection);
+    this.plugin.hook_queue(next, this.connection);
+    this.plugin.hook_reset_transaction(next, this.connection);
+    this.plugin.hook_unrecognized_command(last, this.connection);
+  },
+  'private skip': function (test) {
+    test.expect(9);
+    const next = function (rc) {
+      test.equal(undefined, rc);
+    };
+    const last = function (rc) {
+      test.equal(undefined, rc);
+      test.done();
+    };
+    this.connection.remote.is_private = true;
+
+    this.plugin.hook_deny(next, this.connection);
+    this.plugin.hook_connect(next, this.connection);
+    this.plugin.hook_ehlo(next, this.connection);
+    this.plugin.hook_vrfy(next, this.connection);
+    this.plugin.hook_noop(next, this.connection);
+    this.plugin.hook_data(next, this.connection);
+    this.plugin.hook_queue(next, this.connection);
+    this.plugin.hook_reset_transaction(next, this.connection);
+    this.plugin.hook_unrecognized_command(last, this.connection);
+  },
+};

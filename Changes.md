@@ -1,3 +1,6 @@
+## 1.0.11 - 2017-10-25
+
+- private addresses and flagged connections exemption  
 
 ## 1.0.10 - 2017-08-30
 

@@ -184,6 +184,9 @@ To combat these bruteforce attacks several strategies are called for:
        harm a legit sender but it will make it take much much longer for
        attackers to bruteforce passwords.
 
+### <a name="disabling"></a>Disabling karma for certain connections
+
+Karma plugin is disabled for all private IP addresses according to RFC1918. Optionally you can prevent any plugin operations by setting `connection.notes.disable_karma = true` at `connection_init` hook.
 
 ## LIMITATIONS
 
