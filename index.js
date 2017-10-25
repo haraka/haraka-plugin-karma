@@ -76,7 +76,7 @@ exports.results_init = function (next, connection) {
   const plugin = this;
 
   if (plugin.should_we_skip(connection)) {
-    connection.logdebug(plugin, 'private ip, skipping');
+    connection.logdebug(plugin, 'skipping');
     return next();
   }
 
@@ -393,7 +393,9 @@ exports.tarpit_delay_msa = function (connection, delay, k) {
 };
 
 exports.should_we_skip = function (connection) {
-  return connection.remote.is_private === true || connection.notes.disable_karma === true
+  if (connection.remote.is_private) return true;
+  if (connection.notes.disable_karma) return true;
+  return false;
 };
 
 exports.should_we_deny = function (next, connection, hook) {
@@ -441,9 +443,7 @@ exports.should_we_deny = function (next, connection, hook) {
 exports.hook_deny = function (next, connection, params) {
   const plugin = this;
 
-  if (plugin.should_we_skip(connection)) {
-    return next();
-  }
+  if (plugin.should_we_skip(connection)) return next();
 
   // let pi_deny     = params[0];  // (constants.deny, denysoft, ok)
   // let pi_message  = params[1];
@@ -475,9 +475,7 @@ exports.hook_deny = function (next, connection, params) {
 exports.hook_connect = function (next, connection) {
   const plugin = this;
 
-  if (plugin.should_we_skip(connection)) {
-    return next();
-  }
+  if (plugin.should_we_skip(connection)) return next();
 
   const asnkey = plugin.get_asn_key(connection);
   if (asnkey) {
@@ -485,60 +483,60 @@ exports.hook_connect = function (next, connection) {
   }
   plugin.should_we_deny(next, connection, 'connect');
 };
+
 exports.hook_helo = function (next, connection) {
   const plugin = this;
 
-  if (plugin.should_we_skip(connection)) {
-    return next();
-  }
+  if (plugin.should_we_skip(connection)) return next();
+
   plugin.should_we_deny(next, connection, 'helo');
 };
+
 exports.hook_ehlo = function (next, connection) {
   const plugin = this;
 
-  if (plugin.should_we_skip(connection)) {
-    return next();
-  }
+  if (plugin.should_we_skip(connection)) return next();
+
   plugin.should_we_deny(next, connection, 'ehlo');
 };
+
 exports.hook_vrfy = function (next, connection) {
   const plugin = this;
 
-  if (plugin.should_we_skip(connection)) {
-    return next();
-  }
+  if (plugin.should_we_skip(connection)) return next();
+
   plugin.should_we_deny(next, connection, 'vrfy');
 };
+
 exports.hook_noop = function (next, connection) {
   const plugin = this;
 
-  if (plugin.should_we_skip(connection)) {
-    return next();
-  }
+  if (plugin.should_we_skip(connection)) return next();
+
   plugin.should_we_deny(next, connection, 'noop');
 };
+
 exports.hook_data = function (next, connection) {
   const plugin = this;
 
-  if (plugin.should_we_skip(connection)) {
-    return next();
-  }
+  if (plugin.should_we_skip(connection)) return next();
+
   plugin.should_we_deny(next, connection, 'data');
 };
+
 exports.hook_queue = function (next, connection) {
   const plugin = this;
 
-  if (plugin.should_we_skip(connection)) {
-    return next();
-  }
+  if (plugin.should_we_skip(connection)) return next();
+
   plugin.should_we_deny(next, connection, 'queue');
 };
+
 exports.hook_reset_transaction = function (next, connection) {
   const plugin = this;
 
-  if (plugin.should_we_skip(connection)) {
-    return next();
-  }
+  if (plugin.should_we_skip(connection)) return next();
+
   connection.results.add(plugin, {emit: true});
   plugin.should_we_deny(next, connection, 'reset_transaction');
 };
@@ -546,9 +544,8 @@ exports.hook_reset_transaction = function (next, connection) {
 exports.hook_unrecognized_command = function (next, connection, cmd) {
   const plugin = this;
 
-  if (plugin.should_we_skip(connection)) {
-    return next();
-  }
+  if (plugin.should_we_skip(connection)) return next();
+
   connection.results.incr(plugin, {score: -1});
   connection.results.add(plugin, {fail: 'cmd:('+cmd+')'});
 
@@ -558,9 +555,7 @@ exports.hook_unrecognized_command = function (next, connection, cmd) {
 exports.ip_history_from_redis = function (next, connection) {
   const plugin = this;
 
-  if (plugin.should_we_skip(connection)) {
-    return next();
-  }
+  if (plugin.should_we_skip(connection)) return next();
 
   const expire = (plugin.cfg.redis.expire_days || 60) * 86400; // to days
   const dbkey  = 'karma|' + connection.remote.ip;
@@ -612,9 +607,7 @@ exports.ip_history_from_redis = function (next, connection) {
 exports.hook_mail = function (next, connection, params) {
   const plugin = this;
 
-  if (plugin.should_we_skip(connection)) {
-    return next();
-  }
+  if (plugin.should_we_skip(connection)) return next();
 
   plugin.check_spammy_tld(params[0], connection);
 
@@ -641,9 +634,7 @@ exports.hook_mail = function (next, connection, params) {
 exports.hook_rcpt = function (next, connection, params) {
   const plugin = this;
 
-  if (plugin.should_we_skip(connection)) {
-    return next();
-  }
+  if (plugin.should_we_skip(connection)) return next();
 
   const rcpt = params[0];
 
@@ -667,9 +658,7 @@ exports.hook_rcpt = function (next, connection, params) {
 exports.hook_rcpt_ok = function (next, connection, rcpt) {
   const plugin = this;
 
-  if (plugin.should_we_skip(connection)) {
-    return next();
-  }
+  if (plugin.should_we_skip(connection)) return next();
 
   const txn = connection.transaction;
   if (txn && txn.mail_from && txn.mail_from.user === rcpt.user) {
@@ -685,9 +674,7 @@ exports.hook_data_post = function (next, connection) {
   // goal: prevent delivery of spam before queue
   const plugin = this;
 
-  if (plugin.should_we_skip(connection)) {
-    return next();
-  }
+  if (plugin.should_we_skip(connection)) return next();
 
   plugin.check_awards(connection);  // update awards
 
@@ -712,9 +699,7 @@ exports.increment = function (connection, key, val) {
 exports.hook_disconnect = function (next, connection) {
   const plugin = this;
 
-  if (plugin.should_we_skip(connection)) {
-    return next();
-  }
+  if (plugin.should_we_skip(connection)) return next();
 
   plugin.redis_unsubscribe(connection);
 
