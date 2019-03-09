@@ -141,7 +141,7 @@ exports.preparse_result_awards = function () {
       resolution : parts[6],
     });
   });
-};
+}
 
 exports.check_result = function (connection, message) {
   const plugin = this;
@@ -195,7 +195,7 @@ exports.check_result = function (connection, message) {
       }
     }
   });
-};
+}
 
 exports.result_as_array = function (result) {
 
@@ -212,7 +212,7 @@ exports.result_as_array = function (result) {
   }
   this.loginfo('what format is result: ' + result);
   return result;
-};
+}
 
 exports.check_result_asn = function (asn, conn) {
   const plugin = this;
@@ -221,7 +221,7 @@ exports.check_result_asn = function (asn, conn) {
 
   conn.results.incr(plugin, {score: plugin.cfg.asn_awards[asn]});
   conn.results.push(plugin, {fail: 'asn_awards'});
-};
+}
 
 exports.check_result_lt = function (thisResult, thisAward, conn) {
   const plugin = this;
@@ -234,7 +234,7 @@ exports.check_result_lt = function (thisResult, thisAward, conn) {
     conn.results.incr(plugin, {score: thisAward.award});
     conn.results.push(plugin, {awards: thisAward.id});
   }
-};
+}
 
 exports.check_result_gt = function (thisResult, thisAward, conn) {
   const plugin = this;
@@ -247,7 +247,7 @@ exports.check_result_gt = function (thisResult, thisAward, conn) {
     conn.results.incr(plugin, {score: thisAward.award});
     conn.results.push(plugin, {awards: thisAward.id});
   }
-};
+}
 
 exports.check_result_equal = function (thisResult, thisAward, conn) {
   const plugin = this;
@@ -267,7 +267,7 @@ exports.check_result_equal = function (thisResult, thisAward, conn) {
     conn.results.incr(plugin, {score: thisAward.award});
     conn.results.push(plugin, {awards: thisAward.id});
   }
-};
+}
 
 exports.check_result_match = function (thisResult, thisAward, conn) {
   const plugin = this;
@@ -280,7 +280,7 @@ exports.check_result_match = function (thisResult, thisAward, conn) {
     conn.results.incr(plugin, {score: thisAward.award});
     conn.results.push(plugin, {awards: thisAward.id});
   }
-};
+}
 
 exports.check_result_length = function (thisResult, thisAward, conn) {
   const plugin = this;
@@ -311,7 +311,7 @@ exports.check_result_length = function (thisResult, thisAward, conn) {
     conn.results.incr(plugin, {score: thisAward.award});
     conn.results.push(plugin, {awards: thisAward.id});
   }
-};
+}
 
 exports.apply_tarpit = function (connection, hook, score, next) {
   const plugin = this;
@@ -335,7 +335,7 @@ exports.apply_tarpit = function (connection, hook, score, next) {
     connection.logdebug(plugin, 'tarpit '+hook+' end');
     next();
   }, delay * 1000);
-};
+}
 
 exports.tarpit_delay = function (score, connection, hook, k) {
   const plugin = this;
@@ -360,7 +360,7 @@ exports.tarpit_delay = function (score, connection, hook, k) {
   }
 
   return delay;
-};
+}
 
 exports.tarpit_delay_msa = function (connection, delay, k) {
   const plugin = this;
@@ -390,13 +390,13 @@ exports.tarpit_delay_msa = function (connection, delay, k) {
   }
 
   return delay;
-};
+}
 
 exports.should_we_skip = function (connection) {
   if (connection.remote.is_private) return true;
   if (connection.notes.disable_karma) return true;
   return false;
-};
+}
 
 exports.should_we_deny = function (next, connection, hook) {
   const plugin = this;
@@ -438,7 +438,7 @@ exports.should_we_deny = function (next, connection, hook) {
   return plugin.apply_tarpit(connection, hook, score, () => {
     next(constants.DENY, rejectMsg);
   });
-};
+}
 
 exports.hook_deny = function (next, connection, params) {
   const plugin = this;
@@ -470,7 +470,7 @@ exports.hook_deny = function (next, connection, params) {
   connection.results.incr(plugin, { score: -2 });
 
   next(constants.OK);  // resume the connection
-};
+}
 
 exports.hook_connect = function (next, connection) {
   const plugin = this;
@@ -482,7 +482,7 @@ exports.hook_connect = function (next, connection) {
     plugin.check_asn(connection, asnkey);
   }
   plugin.should_we_deny(next, connection, 'connect');
-};
+}
 
 exports.hook_helo = function (next, connection) {
   const plugin = this;
@@ -490,7 +490,7 @@ exports.hook_helo = function (next, connection) {
   if (plugin.should_we_skip(connection)) return next();
 
   plugin.should_we_deny(next, connection, 'helo');
-};
+}
 
 exports.hook_ehlo = function (next, connection) {
   const plugin = this;
@@ -498,7 +498,7 @@ exports.hook_ehlo = function (next, connection) {
   if (plugin.should_we_skip(connection)) return next();
 
   plugin.should_we_deny(next, connection, 'ehlo');
-};
+}
 
 exports.hook_vrfy = function (next, connection) {
   const plugin = this;
@@ -506,7 +506,7 @@ exports.hook_vrfy = function (next, connection) {
   if (plugin.should_we_skip(connection)) return next();
 
   plugin.should_we_deny(next, connection, 'vrfy');
-};
+}
 
 exports.hook_noop = function (next, connection) {
   const plugin = this;
@@ -514,7 +514,7 @@ exports.hook_noop = function (next, connection) {
   if (plugin.should_we_skip(connection)) return next();
 
   plugin.should_we_deny(next, connection, 'noop');
-};
+}
 
 exports.hook_data = function (next, connection) {
   const plugin = this;
@@ -522,7 +522,7 @@ exports.hook_data = function (next, connection) {
   if (plugin.should_we_skip(connection)) return next();
 
   plugin.should_we_deny(next, connection, 'data');
-};
+}
 
 exports.hook_queue = function (next, connection) {
   const plugin = this;
@@ -530,7 +530,7 @@ exports.hook_queue = function (next, connection) {
   if (plugin.should_we_skip(connection)) return next();
 
   plugin.should_we_deny(next, connection, 'queue');
-};
+}
 
 exports.hook_reset_transaction = function (next, connection) {
   const plugin = this;
@@ -539,18 +539,24 @@ exports.hook_reset_transaction = function (next, connection) {
 
   connection.results.add(plugin, {emit: true});
   plugin.should_we_deny(next, connection, 'reset_transaction');
-};
+}
 
-exports.hook_unrecognized_command = function (next, connection, cmd) {
+exports.hook_unrecognized_command = function (next, connection, params) {
   const plugin = this;
 
   if (plugin.should_we_skip(connection)) return next();
 
+  // in case karma is in config/plugins before tls
+  if (params[0].toUpperCase() === 'STARTTLS') return next();
+
+  // in case karma is in config/plugins before AUTH plugin(s)
+  if (connection.notes.authenticating) return next();
+
   connection.results.incr(plugin, {score: -1});
-  connection.results.add(plugin, {fail: 'cmd:('+cmd+')'});
+  connection.results.add(plugin, {fail: `cmd:(${params})`});
 
   return plugin.should_we_deny(next, connection, 'unrecognized_command');
-};
+}
 
 exports.ip_history_from_redis = function (next, connection) {
   const plugin = this;
@@ -602,7 +608,7 @@ exports.ip_history_from_redis = function (next, connection) {
     plugin.check_awards(connection);
     return next();
   });
-};
+}
 
 exports.hook_mail = function (next, connection, params) {
   const plugin = this;
@@ -629,7 +635,7 @@ exports.hook_mail = function (next, connection, params) {
   }
 
   return plugin.should_we_deny(next, connection, 'mail');
-};
+}
 
 exports.hook_rcpt = function (next, connection, params) {
   const plugin = this;
@@ -653,7 +659,7 @@ exports.hook_rcpt = function (next, connection, params) {
   connection.results.add(plugin, {fail: 'rcpt_to'});
 
   return plugin.should_we_deny(next, connection, 'rcpt');
-};
+}
 
 exports.hook_rcpt_ok = function (next, connection, rcpt) {
   const plugin = this;
@@ -668,7 +674,7 @@ exports.hook_rcpt_ok = function (next, connection, rcpt) {
   plugin.check_syntax_RcptTo(connection);
 
   return plugin.should_we_deny(next, connection, 'rcpt');
-};
+}
 
 exports.hook_data_post = function (next, connection) {
   // goal: prevent delivery of spam before queue
@@ -684,7 +690,7 @@ exports.hook_data_post = function (next, connection) {
   connection.transaction.add_header('X-Haraka-Karma', results);
 
   return plugin.should_we_deny(next, connection, 'data_post');
-};
+}
 
 exports.increment = function (connection, key, val) {
   const plugin = this;
@@ -694,7 +700,7 @@ exports.increment = function (connection, key, val) {
 
   const asnkey = plugin.get_asn_key(connection);
   if (asnkey) plugin.db.hincrby(asnkey, key, 1);
-};
+}
 
 exports.hook_disconnect = function (next, connection) {
   const plugin = this;
@@ -724,7 +730,7 @@ exports.hook_disconnect = function (next, connection) {
 
   connection.results.add(plugin, {emit: true });
   return next();
-};
+}
 
 exports.get_award_loc_from_note = function (connection, award) {
   const plugin = this;
@@ -740,7 +746,7 @@ exports.get_award_loc_from_note = function (connection, award) {
 
   // connection.logdebug(plugin, 'no conn note: ' + award);
   return;
-};
+}
 
 exports.get_award_loc_from_results = function (connection, loc_bits) {
 
@@ -769,7 +775,7 @@ exports.get_award_loc_from_results = function (connection, loc_bits) {
   //     ', ' + notekey);
   if (notekey) { return obj[notekey]; }
   return obj;
-};
+}
 
 exports.get_award_location = function (connection, award_key) {
   // based on award key, find the requested note or result
@@ -797,7 +803,7 @@ exports.get_award_location = function (connection, award_key) {
   }
 
   connection.logdebug(plugin, 'unknown location for ' + award_key);
-};
+}
 
 exports.get_award_condition = function (note_key, note_val) {
   let wants;
@@ -812,7 +818,7 @@ exports.get_award_condition = function (note_key, note_val) {
     if (valbits[3]) { wants = valbits[3]; }
   }
   return wants;
-};
+}
 
 exports.check_awards = function (connection) {
   const plugin = this;
@@ -900,7 +906,7 @@ exports.check_awards = function (connection) {
     plugin.apply_award(connection, key, award);
     delete karma.todo[key];
   }
-};
+}
 
 exports.apply_award = function (connection, nl, award) {
   const plugin = this;
@@ -928,7 +934,7 @@ exports.apply_award = function (connection, nl, award) {
 
   if (award > 0) { connection.results.add(plugin, {pass: trimmed}); }
   if (award < 0) { connection.results.add(plugin, {fail: trimmed}); }
-};
+}
 
 exports.check_spammy_tld = function (mail_from, connection) {
   const plugin = this;
@@ -943,7 +949,7 @@ exports.check_spammy_tld = function (mail_from, connection) {
 
   connection.results.incr(plugin, {score: tld_penalty});
   connection.results.add(plugin, {fail: 'spammy.TLD'});
-};
+}
 
 exports.check_syntax_RcptTo = function (connection) {
   const plugin = this;
@@ -955,7 +961,7 @@ exports.check_syntax_RcptTo = function (connection) {
   connection.loginfo(plugin, 'illegal envelope address format: ' +
           full_rcpt );
   connection.results.add(plugin, {fail: 'rfc5321.RcptTo'});
-};
+}
 
 exports.assemble_note_obj = function (prefix, key) {
   let note = prefix;
@@ -969,7 +975,7 @@ exports.assemble_note_obj = function (prefix, key) {
     if (note === null || note === undefined) { break; }
   }
   return note;
-};
+}
 
 exports.check_asn = function (connection, asnkey) {
   const plugin = this;
@@ -1021,7 +1027,7 @@ exports.check_asn = function (connection, asnkey) {
 
     connection.results.add(report_as, asn_results);
   });
-};
+}
 
 exports.init_ip = function (dbkey, rip, expire) {
   const plugin = this;
@@ -1030,7 +1036,7 @@ exports.init_ip = function (dbkey, rip, expire) {
     .hmset(dbkey, {'bad': 0, 'good': 0, 'connections': 1})
     .expire(dbkey, expire)
     .exec();
-};
+}
 
 exports.get_asn_key = function (connection) {
   const plugin = this;
@@ -1041,7 +1047,7 @@ exports.get_asn_key = function (connection) {
   }
   if (!asn || !asn.asn || isNaN(asn.asn)) { return; }
   return 'as' + asn.asn;
-};
+}
 
 exports.init_asn = function (asnkey, expire) {
   const plugin = this;
@@ -1050,4 +1056,4 @@ exports.init_asn = function (asnkey, expire) {
     .hmset(asnkey, {'bad': 0, 'good': 0, 'connections': 1})
     .expire(asnkey, expire * 2)    // keep ASN longer
     .exec();
-};
+}
