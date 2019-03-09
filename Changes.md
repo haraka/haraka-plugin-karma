@@ -1,6 +1,10 @@
+## 1.0.12 - 2019-03-08
+
+- don't interfere with STARTLS and AUTH when karmi is listed above those plugins in config/plugins
+
 ## 1.0.11 - 2017-10-25
 
-- private addresses and flagged connections exemption  
+- private addresses and flagged connections exemption
 
 ## 1.0.10 - 2017-08-30
 
@@ -27,7 +31,7 @@
 ## 1.0.5 - 2017-02-06
 
 - move merge_redis_ini into load_karma_ini, so it also gets applied
-  after a karma.ini change 
+  after a karma.ini change
 - skip redis operations when no connection exists
 
 
