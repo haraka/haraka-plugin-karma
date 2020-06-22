@@ -4,10 +4,10 @@
   "description": "A heuristics scoring and reputation engine for SMTP connections",
   "main": "index.js",
   "scripts": {
-    "test": "node run_tests",
-    "lint": "./node_modules/.bin/eslint *.js test/*.js",
-    "lintfix": "./node_modules/.bin/eslint --fix *.js test/*.js",
-    "cover": "./node_modules/.bin/istanbul cover ./run_tests"
+    "test": "npx mocha",
+    "lint": "npx eslint *.js test/*.js",
+    "lintfix": "npx eslint --fix *.js test/*.js",
+    "cover": "npx istanbul cover npx mocha"
   },
   "repository": {
     "type": "git",
@@ -29,9 +29,9 @@
     "haraka-plugin-redis": "*"
   },
   "devDependencies": {
-    "eslint": ">=4",
+    "eslint": ">=6",
     "eslint-plugin-haraka": "*",
     "haraka-test-fixtures": "*",
-    "nodeunit": "*"
+    "mocha": "*"
   }
 }
