@@ -6,7 +6,7 @@ const constants    = require('haraka-constants');
 
 const stub         = fixtures.stub.stub;
 
-const _set_up = function (done) {
+function _set_up (done) {
 
   this.plugin = new fixtures.plugin('karma');
 
@@ -17,10 +17,9 @@ const _set_up = function (done) {
   this.connection = fixtures.connection.createConnection({}, { notes: {} });
 
   this.connection.transaction = fixtures.transaction.createTransaction();
-  this.connection.transaction.results = new fixtures.result_store(this.plugin);
 
   done();
-};
+}
 
 exports.karma_init = {
   setUp : _set_up,
@@ -32,7 +31,7 @@ exports.karma_init = {
     test.ok(this.plugin.deny_hooks);
     test.done();
   },
-};
+}
 
 exports.results_init = {
   setUp : _set_up,
@@ -74,7 +73,7 @@ exports.results_init = {
     test.equal(undefined, r);
     test.done();
   },
-};
+}
 
 exports.assemble_note_obj = {
   setUp : _set_up,
@@ -91,7 +90,7 @@ exports.assemble_note_obj = {
     test.deepEqual([1,2], obj);
     test.done();
   },
-};
+}
 
 exports.hook_deny = {
   setUp : _set_up,
@@ -147,7 +146,7 @@ exports.hook_deny = {
     };
     this.plugin.hook_deny(next, this.connection, [constants.DENYSOFT,'','','','','']);
   },
-};
+}
 
 exports.get_award_location = {
   setUp : _set_up,
@@ -219,7 +218,7 @@ exports.get_award_location = {
     test.equal('PLAIN', r.fail[0]);
     test.done();
   },
-};
+}
 
 exports.get_award_condition = {
   setUp : _set_up,
@@ -240,7 +239,7 @@ exports.get_award_condition = {
     ));
     test.done();
   },
-};
+}
 
 exports.check_awards = {
   setUp : _set_up,
@@ -302,7 +301,7 @@ exports.check_awards = {
     test.equal('qmd.pass', this.connection.results.get('karma').pass[0]);
     test.done();
   },
-};
+}
 
 exports.apply_tarpit = {
   setUp : _set_up,
@@ -372,7 +371,7 @@ exports.apply_tarpit = {
     this.connection.results.add(this.plugin, { score: -2 });
     this.plugin.apply_tarpit(this.connection, 'connect', -2, next);
   },
-};
+}
 
 exports.should_we_deny = {
   setUp : _set_up,
@@ -440,7 +439,7 @@ exports.should_we_deny = {
     this.connection.results.add(this.plugin, { score: -6 });
     this.plugin.should_we_deny(next, this.connection, 'connect');
   },
-};
+}
 
 exports.check_result_equal = {
   setUp : _set_up,
@@ -467,7 +466,7 @@ exports.check_result_equal = {
     test.equals(this.connection.results.store.karma, undefined);
     test.done();
   }
-};
+}
 
 exports.check_result_gt = {
   setUp : _set_up,
@@ -484,7 +483,7 @@ exports.check_result_gt = {
     test.equals(this.connection.results.store.karma.awards[0], 5);
     test.done();
   }
-};
+}
 
 exports.check_result_lt = {
   setUp : _set_up,
@@ -513,7 +512,7 @@ exports.check_result_lt = {
     test.equals(this.connection.results.store.karma, undefined);
     test.done();
   }
-};
+}
 
 exports.check_result_match = {
   setUp : _set_up,
@@ -555,7 +554,7 @@ exports.check_result_match = {
     test.equals(this.connection.results.store.karma.awards[0], 89);
     test.done();
   },
-};
+}
 
 exports.check_result_length = {
   setUp : _set_up,
@@ -634,7 +633,37 @@ exports.check_result_length = {
     test.deepEqual(this.connection.results.store.karma, undefined);
     test.done();
   },
-};
+}
+
+exports.check_result_exists = {
+  setUp : _set_up,
+  'exists pattern is scored': function (test) {
+    test.expect(2);
+    const award = {
+      id         : 1,           award      : 2,
+      operator   : 'exists',    value      : 'any',
+      reason     : 'testing',   resolution : 'high five',
+    };
+    this.plugin.check_result_exists(['3'], award, this.connection);
+    // console.log(this.connection.results.store);
+    test.equals(this.connection.results.store.karma.score, 2);
+    test.equals(this.connection.results.store.karma.awards[0], 1);
+    test.done();
+  },
+  'not exists pattern is not scored': function (test) {
+    test.expect(2);
+    const award = {
+      id         : 1,           award      : 3,
+      operator   : 'exists',    value      : '',
+      reason     : 'testing',   resolution : 'misses',
+    };
+    this.plugin.check_result_exists([], award, this.connection);
+    // console.log(this.connection.results.store);
+    test.equals(this.connection.results.store.karma, undefined);
+    test.equals(this.connection.results.store.karma, undefined);
+    test.done();
+  },
+}
 
 exports.check_result = {
   setUp : _set_up,
@@ -666,7 +695,7 @@ exports.check_result = {
     test.equals(this.connection.results.store.karma.awards[0], 2);
     test.done();
   },
-};
+}
 
 exports.check_spammy_tld = {
   setUp : _set_up,
@@ -734,13 +763,13 @@ exports.skiping_hooks = {
   setUp : _set_up,
   'notes.disable_karma': function (test) {
     test.expect(9);
-    const next = function (rc) {
+    function next (rc) {
       test.equal(undefined, rc);
-    };
-    const last = function (rc) {
+    }
+    function last (rc) {
       test.equal(undefined, rc);
       test.done();
-    };
+    }
     this.connection.notes.disable_karma = true;
 
     this.plugin.hook_deny(next, this.connection);
@@ -755,13 +784,13 @@ exports.skiping_hooks = {
   },
   'private skip': function (test) {
     test.expect(9);
-    const next = function (rc) {
+    function next (rc) {
       test.equal(undefined, rc);
-    };
-    const last = function (rc) {
+    }
+    function last (rc) {
       test.equal(undefined, rc);
       test.done();
-    };
+    }
     this.connection.remote.is_private = true;
 
     this.plugin.hook_deny(next, this.connection);
@@ -774,4 +803,4 @@ exports.skiping_hooks = {
     this.plugin.hook_reset_transaction(next, this.connection);
     this.plugin.hook_unrecognized_command(last, this.connection);
   },
-};
+}
