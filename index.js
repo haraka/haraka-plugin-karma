@@ -313,6 +313,27 @@ exports.check_result_length = function (thisResult, thisAward, conn) {
   }
 }
 
+exports.check_result_exists = function (thisResult, thisAward, conn) {
+  const plugin = this;
+
+  /* eslint-disable no-unused-vars */
+  for (const r of thisResult) {
+    const [operator, qty] = thisAward.value.split(/\s+/);
+
+    switch (operator) {
+      case 'any':
+      case '':
+        break;
+      default:
+        conn.results.add(plugin, { err: `invalid operator: ${operator}` });
+        continue;
+    }
+
+    conn.results.incr(plugin, {score: thisAward.award});
+    conn.results.push(plugin, {awards: thisAward.id});
+  }
+}
+
 exports.apply_tarpit = function (connection, hook, score, next) {
   const plugin = this;
   if (!plugin.cfg.tarpit) { return next(); } // tarpit disabled in config
@@ -938,14 +959,14 @@ exports.apply_award = function (connection, nl, award) {
 
 exports.check_spammy_tld = function (mail_from, connection) {
   const plugin = this;
-  if (!plugin.cfg.spammy_tlds) { return; }
-  if (mail_from.isNull()) { return; }         // null sender (bounce)
+  if (!plugin.cfg.spammy_tlds) return;
+  if (mail_from.isNull()) return;         // null sender (bounce)
 
   const from_tld = mail_from.host.split('.').pop();
   // connection.logdebug(plugin, 'from_tld: ' + from_tld);
 
   const tld_penalty = parseFloat(plugin.cfg.spammy_tlds[from_tld] || 0);
-  if (tld_penalty === 0) { return; }
+  if (tld_penalty === 0) return;
 
   connection.results.incr(plugin, {score: tld_penalty});
   connection.results.add(plugin, {fail: 'spammy.TLD'});

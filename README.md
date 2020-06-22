@@ -1,7 +1,6 @@
 [![Build Status][ci-img]][ci-url]
 [![Windows Build Status][ci-win-img]][ci-win-url]
 [![Code Climate][clim-img]][clim-url]
-[![Greenkeeper badge][gk-img]][gk-url]
 [![NPM][npm-img]][npm-url]
 
 # Karma - A heuristics based reputation engine for the Haraka MTA
@@ -216,7 +215,3 @@ Expect to use karma *with* content filters.
 [clim-url]: https://codeclimate.com/github/haraka/haraka-plugin-karma
 [npm-img]: https://nodei.co/npm/haraka-plugin-karma.png
 [npm-url]: https://www.npmjs.com/package/haraka-plugin-karma
-[gk-img]: https://badges.greenkeeper.io/haraka/haraka-plugin-karma.svg
-[gk-url]: https://greenkeeper.io/
-
-<!-- [![Code Coverage][cov-img]][cov-url] -->
