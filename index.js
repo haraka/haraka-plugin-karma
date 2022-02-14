@@ -726,9 +726,9 @@ exports.increment = function (connection, key, val) {
 exports.hook_disconnect = function (next, connection) {
   const plugin = this;
 
-  if (plugin.should_we_skip(connection)) return next();
-
   plugin.redis_unsubscribe(connection);
+
+  if (plugin.should_we_skip(connection)) return next();
 
   const k = connection.results.get('karma');
   if (!k || k.score === undefined) {
