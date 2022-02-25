@@ -15,9 +15,9 @@ exports.register = function () {
 
   // set up defaults
   plugin.deny_hooks = utils.to_object(
-    ['unrecognized_command','helo','data','data_post','queue']
+    ['unrecognized_command','helo','data','data_post','queue','queue_outbound']
   );
-  plugin.deny_exclude_hooks = utils.to_object('rcpt_to, queue');
+  plugin.deny_exclude_hooks = utils.to_object('rcpt_to queue queue_outbound');
   plugin.deny_exclude_plugins = utils.to_object([
     'access', 'helo.checks', 'data.headers', 'spamassassin',
     'mail_from.is_resolvable', 'clamd', 'tls'
@@ -420,7 +420,7 @@ exports.should_we_deny = function (next, connection, hook) {
   const plugin = this;
 
   const r = connection.results.get('karma');
-  if (!r) { return next(); }
+  if (!r) return next();
 
   plugin.check_awards(connection);  // update awards first
 

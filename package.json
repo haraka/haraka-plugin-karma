@@ -29,7 +29,7 @@
     "haraka-plugin-redis": "*"
   },
   "devDependencies": {
-    "eslint": "*",
+    "eslint": ">=6",
     "eslint-plugin-haraka": "*",
     "haraka-test-fixtures": "*",
     "mocha": "*"
