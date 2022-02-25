@@ -15,9 +15,9 @@ exports.register = function () {
 
   // set up defaults
   plugin.deny_hooks = utils.to_object(
-    ['unrecognized_command','helo','data','data_post','queue']
+    ['unrecognized_command','helo','data','data_post','queue','queue_outbound']
   );
-  plugin.deny_exclude_hooks = utils.to_object('rcpt_to, queue');
+  plugin.deny_exclude_hooks = utils.to_object('rcpt_to queue queue_outbound');
   plugin.deny_exclude_plugins = utils.to_object([
     'access', 'helo.checks', 'data.headers', 'spamassassin',
     'mail_from.is_resolvable', 'clamd', 'tls'
@@ -210,7 +210,7 @@ exports.result_as_array = function (result) {
     });
     return array;
   }
-  this.loginfo('what format is result: ' + result);
+  this.loginfo(`what format is result: ${result}`);
   return result;
 }
 
@@ -286,10 +286,7 @@ exports.check_result_length = function (thisResult, thisAward, conn) {
   const plugin = this;
 
   for (let j=0; j < thisResult.length; j++) {
-    // let [operator, qty] = thisAward.value.split(/\s+/); // requires node 6
-    const matches = thisAward.value.split(/\s+/);
-    const operator = matches[0];
-    const qty = matches[1];
+    const [operator, qty] = thisAward.value.split(/\s+/); // requires node 6+
 
     switch (operator) {
       case 'eq':
@@ -304,12 +301,12 @@ exports.check_result_length = function (thisResult, thisAward, conn) {
         if (parseInt(thisResult[j], 10) >= parseInt(qty, 10)) continue;
         break;
       default:
-        conn.results.add(plugin, { err: 'invalid operator:' + operator });
+        conn.results.add(plugin, { err: `invalid operator: ${operator}` });
         continue;
     }
 
-    conn.results.incr(plugin, {score: thisAward.award});
-    conn.results.push(plugin, {awards: thisAward.id});
+    conn.results.incr(plugin, {score:  thisAward.award});
+    conn.results.push(plugin, {awards: thisAward.id   });
   }
 }
 
@@ -351,9 +348,9 @@ exports.apply_tarpit = function (connection, hook, score, next) {
   const delay = plugin.tarpit_delay(score, connection, hook, k);
   if (!delay) return next();
 
-  connection.logdebug(plugin, 'tarpitting '+hook+' for ' + delay + 's');
+  connection.logdebug(plugin, `tarpitting ${hook} for ${delay}s`);
   setTimeout(() => {
-    connection.logdebug(plugin, 'tarpit '+hook+' end');
+    connection.logdebug(plugin, `tarpit ${hook} end`);
     next();
   }, delay * 1000);
 }
@@ -376,7 +373,7 @@ exports.tarpit_delay = function (score, connection, hook, k) {
 
   const max = plugin.cfg.tarpit.max || 5;
   if (delay > max) {
-    connection.logdebug(plugin, 'tarpit capped to: ' + max);
+    connection.logdebug(plugin, `tarpit capped to: ${max}`);
     return max;
   }
 
@@ -393,20 +390,20 @@ exports.tarpit_delay_msa = function (connection, delay, k) {
   const history = ((k.good || 0) - (k.bad || 0));
   if (history > 0) {
     delay = delay - 2;
-    connection.logdebug(plugin, trg + ' history: ' + delay);
+    connection.logdebug(plugin, `${trg} history: ${delay}`);
   }
 
   // Reduce delay for good ASN history
   let asn = connection.results.get('asn');
   if (!asn) { asn = connection.results.get('geoip'); }
   if (asn && asn.asn && k.neighbors > 0) {
-    connection.logdebug(plugin, trg + ' neighbors: ' + delay);
+    connection.logdebug(plugin, `${trg} neighbors: ${delay}`);
     delay = delay - 2;
   }
 
   const max = plugin.cfg.tarpit.max_msa || 2;
   if (delay > max) {
-    connection.logdebug(plugin, 'tarpit capped at: ' + delay);
+    connection.logdebug(plugin, `tarpit capped at: ${delay}`);
     delay = max;
   }
 
@@ -423,7 +420,7 @@ exports.should_we_deny = function (next, connection, hook) {
   const plugin = this;
 
   const r = connection.results.get('karma');
-  if (!r) { return next(); }
+  if (!r) return next();
 
   plugin.check_awards(connection);  // update awards first
 
@@ -487,7 +484,7 @@ exports.hook_deny = function (next, connection, params) {
   }
 
   // intercept any other denials
-  connection.results.add(plugin, { msg: 'deny:' + pi_name });
+  connection.results.add(plugin, { msg: `deny: ${pi_name}` });
   connection.results.incr(plugin, { score: -2 });
 
   next(constants.OK);  // resume the connection
@@ -585,7 +582,7 @@ exports.ip_history_from_redis = function (next, connection) {
   if (plugin.should_we_skip(connection)) return next();
 
   const expire = (plugin.cfg.redis.expire_days || 60) * 86400; // to days
-  const dbkey  = 'karma|' + connection.remote.ip;
+  const dbkey  = `karma|${connection.remote.ip}`;
 
   // redis plugin is emitting errors, no need to here
   if (!plugin.db) return next();
@@ -641,7 +638,7 @@ exports.hook_mail = function (next, connection, params) {
   // look for invalid (RFC 5321,(2)821) space in envelope from
   const full_from = connection.current_line;
   if (full_from.toUpperCase().substring(0,11) !== 'MAIL FROM:<') {
-    connection.loginfo(plugin, 'RFC ignorant env addr format: ' + full_from);
+    connection.loginfo(plugin, `RFC ignorant env addr format: ${full_from}`);
     connection.results.add(plugin, {fail: 'rfc5321.MailFrom'});
   }
 
@@ -706,7 +703,7 @@ exports.hook_data_post = function (next, connection) {
   plugin.check_awards(connection);  // update awards
 
   const results = connection.results.collate(plugin);
-  connection.logdebug(plugin, 'adding header: ' + results);
+  connection.logdebug(plugin, `adding header: ${results}`);
   connection.transaction.remove_header('X-Haraka-Karma');
   connection.transaction.add_header('X-Haraka-Karma', results);
 
@@ -717,7 +714,7 @@ exports.increment = function (connection, key, val) {
   const plugin = this;
   if (!plugin.db) return;
 
-  plugin.db.hincrby('karma|' + connection.remote.ip, key, 1);
+  plugin.db.hincrby(`karma|${connection.remote.ip}`, key, 1);
 
   const asnkey = plugin.get_asn_key(connection);
   if (asnkey) plugin.db.hincrby(asnkey, key, 1);
@@ -761,11 +758,11 @@ exports.get_award_loc_from_note = function (connection, award) {
     if (obj) { return obj; }
   }
 
-  // connection.logdebug(plugin, 'no txn note: ' + award);
+  // connection.logdebug(plugin, `no txn note: ${award}`);
   const obj = plugin.assemble_note_obj(connection, award);
   if (obj) return obj;
 
-  // connection.logdebug(plugin, 'no conn note: ' + award);
+  // connection.logdebug(plugin, `no conn note: ${award}`);
   return;
 }
 
@@ -775,7 +772,7 @@ exports.get_award_loc_from_results = function (connection, loc_bits) {
   let notekey = loc_bits[2];
 
   if (phase_prefixes[pi_name]) {
-    pi_name = loc_bits[1] + '.' + loc_bits[2];
+    pi_name = `${loc_bits[1]}.${loc_bits[2]}`;
     notekey = loc_bits[3];
   }
 
@@ -784,17 +781,16 @@ exports.get_award_loc_from_results = function (connection, loc_bits) {
     obj = connection.transaction.results.get(pi_name);
   }
   if (!obj) {
-    // connection.logdebug(plugin, 'no txn results: ' + pi_name);
+    // connection.logdebug(plugin, `no txn results: ${pi_name}`);
     obj = connection.results.get(pi_name);
   }
   if (!obj) {
-    // connection.logdebug(plugin, 'no conn results: ' + pi_name);
+    // connection.logdebug(plugin, `no conn results: ${pi_name}`);
     return;
   }
 
-  // connection.logdebug(plugin, 'found results for ' + pi_name +
-  //     ', ' + notekey);
-  if (notekey) { return obj[notekey]; }
+  // connection.logdebug(plugin, `found results for ${pi_name}, ${notekey}`);
+  if (notekey) return obj[notekey];
   return obj;
 }
 
@@ -823,7 +819,7 @@ exports.get_award_location = function (connection, award_key) {
     return plugin.get_award_loc_from_results(connection.transaction, loc_bits);
   }
 
-  connection.logdebug(plugin, 'unknown location for ' + award_key);
+  connection.logdebug(plugin, `unknown location for ${award_key}`);
 }
 
 exports.get_award_condition = function (note_key, note_val) {
@@ -871,8 +867,7 @@ exports.check_awards = function (connection) {
       if (note !== wants) { continue; }    // didn't match
     }
 
-    // connection.loginfo(plugin, 'check_awards, case matching for: ' +
-    //    wants);
+    // connection.loginfo(plugin, `check_awards, case matching for: ${wants}`
 
     // the matching logic here is inverted, weeding out misses (continue)
     // Matches fall through (break) to the apply_award below.
@@ -908,8 +903,7 @@ exports.check_awards = function (connection) {
             if (note.length !== parseFloat(wants)) { continue; }
             break;
           default:
-            connection.logerror(plugin, 'length operator "' +
-              operator + '" not supported.');
+            connection.logerror(plugin, `length operator "${operator}" not supported.`);
             continue;
         }
         break;
@@ -933,15 +927,14 @@ exports.apply_award = function (connection, nl, award) {
   const plugin = this;
   if (!award) { return; }
   if (isNaN(award)) {    // garbage in config
-    connection.logerror(plugin, 'non-numeric award from: ' + nl + ':' +
-              award);
+    connection.logerror(plugin, `non-numeric award from: ${nl}:${award}`);
     return;
   }
 
   const bits = nl.split('@'); nl = bits[0];  // strip off @... if present
 
   connection.results.incr(plugin, {score: award});
-  connection.logdebug(plugin, 'applied ' + nl + ':' + award);
+  connection.logdebug(plugin, `applied ${nl}:${award}`);
 
   let trimmed = nl.substring(0, 5) === 'notes' ? nl.substring(6) :
     nl.substring(0, 7) === 'results' ? nl.substring(8) :
@@ -963,7 +956,7 @@ exports.check_spammy_tld = function (mail_from, connection) {
   if (mail_from.isNull()) return;         // null sender (bounce)
 
   const from_tld = mail_from.host.split('.').pop();
-  // connection.logdebug(plugin, 'from_tld: ' + from_tld);
+  // connection.logdebug(plugin, `from_tld: ${from_tld}`);
 
   const tld_penalty = parseFloat(plugin.cfg.spammy_tlds[from_tld] || 0);
   if (tld_penalty === 0) return;
@@ -979,8 +972,7 @@ exports.check_syntax_RcptTo = function (connection) {
   const full_rcpt = connection.current_line;
   if (full_rcpt.toUpperCase().substring(0,9) === 'RCPT TO:<') { return; }
 
-  connection.loginfo(plugin, 'illegal envelope address format: ' +
-          full_rcpt );
+  connection.loginfo(plugin, `illegal envelope address format: ${full_rcpt}`);
   connection.results.add(plugin, {fail: 'rfc5321.RcptTo'});
 }
 
@@ -990,7 +982,7 @@ exports.assemble_note_obj = function (prefix, key) {
   while (parts.length > 0) {
     let next = parts.shift();
     if (phase_prefixes[next]) {
-      next = next + '.' + parts.shift();
+      next = `${next}.${parts.shift()}`;
     }
     note = note[next];
     if (note === null || note === undefined) { break; }
@@ -1067,7 +1059,7 @@ exports.get_asn_key = function (connection) {
     asn = connection.results.get('geoip');
   }
   if (!asn || !asn.asn || isNaN(asn.asn)) { return; }
-  return 'as' + asn.asn;
+  return `as${asn.asn}`;
 }
 
 exports.init_asn = function (asnkey, expire) {
