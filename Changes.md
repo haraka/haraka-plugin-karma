@@ -1,3 +1,6 @@
+## 1.0.14 - 2022-02-14
+
+- try to unsubscribe in case connection is marked to skip during transaction
 
 ## 1.0.13 - 2019-04-23
 
