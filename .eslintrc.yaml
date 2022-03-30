@@ -7,6 +7,9 @@ plugins: [ haraka ]
 
 extends: [ eslint:recommended, plugin:haraka/recommended ]
 
+parserOptions:
+  ecmaVersion: 2020
+
 root: true
 
 rules:

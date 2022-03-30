@@ -2,6 +2,9 @@ name: Haraka Lint
 
 on: [ push, pull_request ]
 
+env:
+  CI: true
+
 jobs:
 
   lint:
@@ -28,6 +31,3 @@ jobs:
 
     - name: Lint
       run: npm run lint
-
-      env:
-        CI: true

@@ -1,13 +1,14 @@
 {
   "name": "haraka-plugin-karma",
-  "version": "1.0.14",
+  "version": "2.0.0",
   "description": "A heuristics scoring and reputation engine for SMTP connections",
   "main": "index.js",
   "scripts": {
     "test": "npx mocha",
     "lint": "npx eslint index.js test/*.js",
     "lintfix": "npx eslint --fix index.js test/*.js",
-    "cover": "npx istanbul cover npx mocha"
+    "cover": "npx istanbul cover npx mocha",
+    "versions": "npx dependency-version-checker check"
   },
   "repository": {
     "type": "git",
@@ -29,9 +30,9 @@
     "haraka-plugin-redis": "*"
   },
   "devDependencies": {
-    "eslint": ">=6",
+    "eslint": "^8",
     "eslint-plugin-haraka": "*",
     "haraka-test-fixtures": "*",
-    "mocha": "*"
+    "mocha": "^9"
   }
 }
