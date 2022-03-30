@@ -14,6 +14,8 @@ root: true
 
 rules:
   indent: [2, 2, { SwitchCase: 1 } ]
+  semi: [ error, never ]
+  semi-style: [ error, last ]
 
 globals:
   OK: true

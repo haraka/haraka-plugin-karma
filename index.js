@@ -399,35 +399,33 @@ exports.should_we_skip = function (connection) {
 }
 
 exports.should_we_deny = function (next, connection, hook) {
-  const plugin = this
-
   const r = connection.results.get('karma')
   if (!r) return next()
 
-  plugin.check_awards(connection)  // update awards first
+  this.check_awards(connection)  // update awards first
 
   const score = parseFloat(r.score)
   if (isNaN(score))  {
-    connection.logerror(plugin, 'score is NaN')
-    connection.results.add(plugin, {score: 0})
+    connection.logerror(this, 'score is NaN')
+    connection.results.add(this, {score: 0})
     return next()
   }
 
   let negative_limit = -5
-  if (plugin.cfg.thresholds && plugin.cfg.thresholds.negative) {
-    negative_limit = parseFloat(plugin.cfg.thresholds.negative)
+  if (this.cfg.thresholds && this.cfg.thresholds.negative) {
+    negative_limit = parseFloat(this.cfg.thresholds.negative)
   }
 
   if (score > negative_limit) {
-    return plugin.apply_tarpit(connection, hook, score, next)
+    return this.apply_tarpit(connection, hook, score, next)
   }
-  if (!plugin.deny_hooks[hook]) {
-    return plugin.apply_tarpit(connection, hook, score, next)
+  if (!this.deny_hooks[hook]) {
+    return this.apply_tarpit(connection, hook, score, next)
   }
 
   let rejectMsg = 'very bad karma score: {score}'
-  if (plugin.cfg.deny && plugin.cfg.deny.message) {
-    rejectMsg = plugin.cfg.deny.message
+  if (this.cfg.deny && this.cfg.deny.message) {
+    rejectMsg = this.cfg.deny.message
   }
 
   if (/\{/.test(rejectMsg)) {
@@ -435,15 +433,13 @@ exports.should_we_deny = function (next, connection, hook) {
     rejectMsg = rejectMsg.replace(/\{uuid\}/, connection.uuid)
   }
 
-  return plugin.apply_tarpit(connection, hook, score, () => {
+  return this.apply_tarpit(connection, hook, score, () => {
     next(constants.DENY, rejectMsg)
   })
 }
 
 exports.hook_deny = function (next, connection, params) {
-  const plugin = this
-
-  if (plugin.should_we_skip(connection)) return next()
+  if (this.should_we_skip(connection)) return next()
 
   // let pi_deny     = params[0];  // (constants.deny, denysoft, ok)
   // let pi_message  = params[1];
@@ -455,96 +451,75 @@ exports.hook_deny = function (next, connection, params) {
   // exceptions, whose 'DENY' should not be captured
   if (pi_name) {
     if (pi_name === 'karma') return next()
-    if (plugin.deny_exclude_plugins[pi_name]) return next()
+    if (this.deny_exclude_plugins[pi_name]) return next()
   }
-  if (pi_hook && plugin.deny_exclude_hooks[pi_hook]) {
-    return next()
-  }
+  if (pi_hook && this.deny_exclude_hooks[pi_hook]) return next()
 
-  if (!connection.results) {
-    return next(constants.OK) // resume the connection
-  }
+  if (!connection.results) return next(constants.OK) // resume the connection
 
   // intercept any other denials
-  connection.results.add(plugin, { msg: `deny: ${pi_name}` })
-  connection.results.incr(plugin, { score: -2 })
+  connection.results.add(this, { msg: `deny: ${pi_name}` })
+  connection.results.incr(this, { score: -2 })
 
   next(constants.OK)  // resume the connection
 }
 
 exports.hook_connect = function (next, connection) {
-  const plugin = this
+  if (this.should_we_skip(connection)) return next()
 
-  if (plugin.should_we_skip(connection)) return next()
-
-  const asnkey = plugin.get_asn_key(connection)
+  const asnkey = this.get_asn_key(connection)
   if (asnkey) {
-    plugin.check_asn(connection, asnkey)
+    this.check_asn(connection, asnkey)
   }
-  plugin.should_we_deny(next, connection, 'connect')
+  this.should_we_deny(next, connection, 'connect')
 }
 
 exports.hook_helo = function (next, connection) {
-  const plugin = this
+  if (this.should_we_skip(connection)) return next()
 
-  if (plugin.should_we_skip(connection)) return next()
-
-  plugin.should_we_deny(next, connection, 'helo')
+  this.should_we_deny(next, connection, 'helo')
 }
 
 exports.hook_ehlo = function (next, connection) {
-  const plugin = this
+  if (this.should_we_skip(connection)) return next()
 
-  if (plugin.should_we_skip(connection)) return next()
-
-  plugin.should_we_deny(next, connection, 'ehlo')
+  this.should_we_deny(next, connection, 'ehlo')
 }
 
 exports.hook_vrfy = function (next, connection) {
-  const plugin = this
+  if (this.should_we_skip(connection)) return next()
 
-  if (plugin.should_we_skip(connection)) return next()
-
-  plugin.should_we_deny(next, connection, 'vrfy')
+  this.should_we_deny(next, connection, 'vrfy')
 }
 
 exports.hook_noop = function (next, connection) {
-  const plugin = this
+  if (this.should_we_skip(connection)) return next()
 
-  if (plugin.should_we_skip(connection)) return next()
-
-  plugin.should_we_deny(next, connection, 'noop')
+  this.should_we_deny(next, connection, 'noop')
 }
 
 exports.hook_data = function (next, connection) {
-  const plugin = this
+  if (this.should_we_skip(connection)) return next()
 
-  if (plugin.should_we_skip(connection)) return next()
-
-  plugin.should_we_deny(next, connection, 'data')
+  this.should_we_deny(next, connection, 'data')
 }
 
 exports.hook_queue = function (next, connection) {
-  const plugin = this
+  if (this.should_we_skip(connection)) return next()
 
-  if (plugin.should_we_skip(connection)) return next()
-
-  plugin.should_we_deny(next, connection, 'queue')
+  this.should_we_deny(next, connection, 'queue')
 }
 
 exports.hook_reset_transaction = function (next, connection) {
-  const plugin = this
+  if (this.should_we_skip(connection)) return next()
 
-  if (plugin.should_we_skip(connection)) return next()
-
-  connection.results.add(plugin, {emit: true})
-  plugin.should_we_deny(next, connection, 'reset_transaction')
+  connection.results.add(this, {emit: true})
+  this.should_we_deny(next, connection, 'reset_transaction')
 }
 
 exports.hook_unrecognized_command = function (next, connection, params) {
-  const plugin = this
 
-  if (plugin.should_we_skip(connection)) return next()
+  if (this.should_we_skip(connection)) return next()
 
   // in case karma is in config/plugins before tls
   if (params[0].toUpperCase() === 'STARTTLS') return next()
@@ -552,10 +527,10 @@ exports.hook_unrecognized_command = function (next, connection, params) {
   // in case karma is in config/plugins before AUTH plugin(s)
   if (connection.notes.authenticating) return next()
 
-  connection.results.incr(plugin, {score: -1})
-  connection.results.add(plugin, {fail: `cmd:(${params})`})
+  connection.results.incr(this, {score: -1})
+  connection.results.add(this, {fail: `cmd:(${params})`})
 
-  return plugin.should_we_deny(next, connection, 'unrecognized_command')
+  return this.should_we_deny(next, connection, 'unrecognized_command')
 }
 
 exports.ip_history_from_redis = function (next, connection) {
@@ -611,36 +586,34 @@ exports.ip_history_from_redis = function (next, connection) {
 }
 
 exports.hook_mail = function (next, connection, params) {
-  const plugin = this
 
-  if (plugin.should_we_skip(connection)) return next()
+  if (this.should_we_skip(connection)) return next()
 
-  plugin.check_spammy_tld(params[0], connection)
+  this.check_spammy_tld(params[0], connection)
 
   // look for invalid (RFC 5321,(2)821) space in envelope from
   const full_from = connection.current_line
   if (full_from.toUpperCase().substring(0,11) !== 'MAIL FROM:<') {
-    connection.loginfo(plugin, `RFC ignorant env addr format: ${full_from}`)
-    connection.results.add(plugin, {fail: 'rfc5321.MailFrom'})
+    connection.loginfo(this, `RFC ignorant env addr format: ${full_from}`)
+    connection.results.add(this, {fail: 'rfc5321.MailFrom'})
   }
 
   // apply TLS awards (if defined)
-  if (plugin.cfg.tls !== undefined) {
-    if (plugin.cfg.tls.set && connection.tls.enabled) {
-      connection.results.incr(plugin, {score: plugin.cfg.tls.set})
+  if (this.cfg.tls !== undefined) {
+    if (this.cfg.tls.set && connection.tls.enabled) {
+      connection.results.incr(this, {score: this.cfg.tls.set})
     }
-    if (plugin.cfg.tls.unset && !connection.tls.enabled) {
-      connection.results.incr(plugin, {score: plugin.cfg.tls.unset})
+    if (this.cfg.tls.unset && !connection.tls.enabled) {
+      connection.results.incr(this, {score: this.cfg.tls.unset})
     }
   }
 
-  return plugin.should_we_deny(next, connection, 'mail')
+  return this.should_we_deny(next, connection, 'mail')
 }
 
 exports.hook_rcpt = function (next, connection, params) {
-  const plugin = this
 
-  if (plugin.should_we_skip(connection)) return next()
+  if (this.should_we_skip(connection)) return next()
 
   const rcpt = params[0]
 
@@ -649,47 +622,44 @@ exports.hook_rcpt = function (next, connection, params) {
 
   // odds of from_user=rcpt_user in ham: < 1%, in spam > 40%
   // 2015-05 30-day sample: 84% spam correlation
-  const txn = connection.transaction
-  if (txn && txn.mail_from && txn.mail_from.user === rcpt.user) {
-    connection.results.add(plugin, {fail: 'env_user_match'})
+  if (connection?.transaction?.mail_from?.user === rcpt.user) {
+    connection.results.add(this, {fail: 'env_user_match'})
   }
 
-  plugin.check_syntax_RcptTo(connection)
+  this.check_syntax_RcptTo(connection)
 
-  connection.results.add(plugin, {fail: 'rcpt_to'})
+  connection.results.add(this, {fail: 'rcpt_to'})
 
-  return plugin.should_we_deny(next, connection, 'rcpt')
+  return this.should_we_deny(next, connection, 'rcpt')
 }
 
 exports.hook_rcpt_ok = function (next, connection, rcpt) {
-  const plugin = this
 
-  if (plugin.should_we_skip(connection)) return next()
+  if (this.should_we_skip(connection)) return next()
 
   const txn = connection.transaction
   if (txn && txn.mail_from && txn.mail_from.user === rcpt.user) {
-    connection.results.add(plugin, {fail: 'env_user_match'})
+    connection.results.add(this, {fail: 'env_user_match'})
   }
 
-  plugin.check_syntax_RcptTo(connection)
+  this.check_syntax_RcptTo(connection)
 
-  return plugin.should_we_deny(next, connection, 'rcpt')
+  return this.should_we_deny(next, connection, 'rcpt')
 }
 
 exports.hook_data_post = function (next, connection) {
   // goal: prevent delivery of spam before queue
-  const plugin = this
 
-  if (plugin.should_we_skip(connection)) return next()
+  if (this.should_we_skip(connection)) return next()
 
-  plugin.check_awards(connection)  // update awards
+  this.check_awards(connection)  // update awards
 
-  const results = connection.results.collate(plugin)
-  connection.logdebug(plugin, `adding header: ${results}`)
+  const results = connection.results.collate(this)
+  connection.logdebug(this, `adding header: ${results}`)
   connection.transaction.remove_header('X-Haraka-Karma')
   connection.transaction.add_header('X-Haraka-Karma', results)
 
-  return plugin.should_we_deny(next, connection, 'data_post')
+  return this.should_we_deny(next, connection, 'data_post')
 }
 
 exports.increment = function (connection, key, val) {
@@ -733,18 +703,17 @@ exports.hook_disconnect = function (next, connection) {
 }
 
 exports.get_award_loc_from_note = function (connection, award) {
-  const plugin = this
 
   if (connection.transaction) {
-    const obj = plugin.assemble_note_obj(connection.transaction, award)
-    if (obj) { return obj }
+    const obj = this.assemble_note_obj(connection.transaction, award)
+    if (obj) return obj
   }
 
-  // connection.logdebug(plugin, `no txn note: ${award}`);
-  const obj = plugin.assemble_note_obj(connection, award)
+  // connection.logdebug(this, `no txn note: ${award}`);
+  const obj = this.assemble_note_obj(connection, award)
   if (obj) return obj
 
-  // connection.logdebug(plugin, `no conn note: ${award}`);
+  // connection.logdebug(this, `no conn note: ${award}`);
   return
 }
 
@@ -759,17 +728,11 @@ exports.get_award_loc_from_results = function (connection, loc_bits) {
   }
 
   let obj
-  if (connection.transaction) {
-    obj = connection.transaction.results.get(pi_name)
-  }
-  if (!obj) {
-    // connection.logdebug(plugin, `no txn results: ${pi_name}`);
-    obj = connection.results.get(pi_name)
-  }
-  if (!obj) {
-    // connection.logdebug(plugin, `no conn results: ${pi_name}`);
-    return
-  }
+  if (connection.transaction) obj = connection.transaction.results.get(pi_name)
+
+  // connection.logdebug(plugin, `no txn results: ${pi_name}`);
+  if (!obj) obj = connection.results.get(pi_name)
+  if (!obj) return
 
   // connection.logdebug(plugin, `found results for ${pi_name}, ${notekey}`);
   if (notekey) return obj[notekey]
@@ -778,30 +741,25 @@ exports.get_award_loc_from_results = function (connection, loc_bits) {
 
 exports.get_award_location = function (connection, award_key) {
   // based on award key, find the requested note or result
-  const plugin = this
   const bits = award_key.split('@')
   const loc_bits = bits[0].split('.')
-  if (loc_bits.length === 1) {          // ex: relaying
-    return connection[bits[0]]
-  }
+  if (loc_bits.length === 1) return connection[bits[0]] // ex: relaying
 
   if (loc_bits[0] === 'notes') {        // ex: notes.spf_mail_helo
-    return plugin.get_award_loc_from_note(connection, bits[0])
+    return this.get_award_loc_from_note(connection, bits[0])
   }
 
-  if (loc_bits[0] === 'results') {   // ex: results.geoip.distance
-    return plugin.get_award_loc_from_results(connection, loc_bits)
+  if (loc_bits[0] === 'results') {      // ex: results.geoip.distance
+    return this.get_award_loc_from_results(connection, loc_bits)
   }
 
   // ex: transaction.results.spf
-  if (connection.transaction &&
-    loc_bits[0] === 'transaction' &&
-    loc_bits[1] === 'results') {
+  if (connection.transaction && loc_bits[0] === 'transaction' && loc_bits[1] === 'results') {
     loc_bits.shift()
-    return plugin.get_award_loc_from_results(connection.transaction, loc_bits)
+    return this.get_award_loc_from_results(connection.transaction, loc_bits)
   }
 
-  connection.logdebug(plugin, `unknown location for ${award_key}`)
+  connection.logdebug(this, `unknown location for ${award_key}`)
 }
 
 exports.get_award_condition = function (note_key, note_val) {
@@ -810,20 +768,18 @@ exports.get_award_condition = function (note_key, note_val) {
   if (keybits[1]) { wants = keybits[1] }
 
   const valbits = note_val.split(/\s+/)
-  if (!valbits[1]) { return wants }
-  if (valbits[1] !== 'if') { return wants }  // no if condition
+  if (!valbits[1]) return wants
+  if (valbits[1] !== 'if') return wants  // no if condition
 
   if (valbits[2].match(/^(equals|gt|lt|match)$/)) {
-    if (valbits[3]) { wants = valbits[3] }
+    if (valbits[3]) wants = valbits[3]
   }
   return wants
 }
 
 exports.check_awards = function (connection) {
-  const plugin = this
-  const karma  = connection.results.get('karma')
-  if (!karma     ) return
-  if (!karma.todo) return
+  const karma = connection.results.get('karma')
+  if (!karma?.todo) return
 
   for (const key in karma.todo) {
     //     loc                     =     terms
@@ -832,24 +788,24 @@ exports.check_awards = function (connection) {
     // results.geoip.distance@4000 = -1 if gt 4000
     const award_terms = karma.todo[key]
 
-    const note = plugin.get_award_location(connection, key)
-    if (note === undefined) { continue }
-    let wants = plugin.get_award_condition(key, award_terms)
+    const note = this.get_award_location(connection, key)
+    if (note === undefined) continue
+    let wants = this.get_award_condition(key, award_terms)
 
     // test the desired condition
     const bits = award_terms.split(/\s+/)
     const award = parseFloat(bits[0])
     if (!bits[1] || bits[1] !== 'if') {    // no if conditions
-      if (!note) { continue }             // failed truth test
+      if (!note) continue                  // failed truth test
       if (!wants) {                        // no wants, truth matches
-        plugin.apply_award(connection, key, award)
+        this.apply_award(connection, key, award)
         delete karma.todo[key]
         continue
       }
-      if (note !== wants) { continue }    // didn't match
+      if (note !== wants) continue    // didn't match
     }
 
-    // connection.loginfo(plugin, `check_awards, case matching for: ${wants}`
+    // connection.loginfo(this, `check_awards, case matching for: ${wants}`
 
     // the matching logic here is inverted, weeding out misses (continue)
     // Matches fall through (break) to the apply_award below.
@@ -859,33 +815,33 @@ exports.check_awards = function (connection) {
         if (wants != note) continue
         break
       case 'gt':
-        if (parseFloat(note) <= parseFloat(wants)) { continue }
+        if (parseFloat(note) <= parseFloat(wants)) continue
         break
       case 'lt':
-        if (parseFloat(note) >= parseFloat(wants)) { continue }
+        if (parseFloat(note) >= parseFloat(wants)) continue
         break
       case 'match':
         if (Array.isArray(note)) {
-          // connection.logerror(plugin, 'matching an array');
-          if (new RegExp(wants, 'i').test(note)) { break }
+          // connection.logerror(this, 'matching an array');
+          if (new RegExp(wants, 'i').test(note)) break
         }
-        if (note.toString().match(new RegExp(wants, 'i'))) { break }
+        if (note.toString().match(new RegExp(wants, 'i'))) break
         continue
       case 'length': {
         const operator = bits[3]
         if (bits[4]) { wants = bits[4] }
         switch (operator) {
           case 'gt':
-            if (note.length <= parseFloat(wants)) { continue }
+            if (note.length <= parseFloat(wants)) continue
             break
           case 'lt':
-            if (note.length >= parseFloat(wants)) { continue }
+            if (note.length >= parseFloat(wants)) continue
             break
           case 'equals':
-            if (note.length !== parseFloat(wants)) { continue }
+            if (note.length !== parseFloat(wants)) continue
             break
           default:
-            connection.logerror(plugin, `length operator "${operator}" not supported.`)
+            connection.logerror(this, `length operator "${operator}" not supported.`)
             continue
         }
         break
@@ -893,30 +849,29 @@ exports.check_awards = function (connection) {
       case 'in':              // if in pass whitelisted
         // let list = bits[3];
         if (bits[4]) { wants = bits[4] }
-        if (!Array.isArray(note)) { continue }
-        if (!wants) { continue }
-        if (note.indexOf(wants) !== -1) { break } // found!
+        if (!Array.isArray(note)) continue
+        if (!wants) continue
+        if (note.indexOf(wants) !== -1) break // found!
         continue
       default:
         continue
     }
-    plugin.apply_award(connection, key, award)
+    this.apply_award(connection, key, award)
     delete karma.todo[key]
   }
 }
 
 exports.apply_award = function (connection, nl, award) {
-  const plugin = this
-  if (!award) { return }
+  if (!award) return
   if (isNaN(award)) {    // garbage in config
-    connection.logerror(plugin, `non-numeric award from: ${nl}:${award}`)
+    connection.logerror(this, `non-numeric award from: ${nl}:${award}`)
     return
   }
 
   const bits = nl.split('@'); nl = bits[0]  // strip off @... if present
 
-  connection.results.incr(plugin, {score: award})
-  connection.logdebug(plugin, `applied ${nl}:${award}`)
+  connection.results.incr(this, {score: award})
+  connection.logdebug(this, `applied ${nl}:${award}`)
 
   let trimmed = nl.substring(0, 5) === 'notes' ? nl.substring(6) :
     nl.substring(0, 7) === 'results' ? nl.substring(8) :
@@ -928,34 +883,31 @@ exports.apply_award = function (connection, nl, award) {
   if (trimmed.substring(0,7) === 'connect') trimmed = trimmed.substring(8)
   if (trimmed.substring(0,4) === 'data') trimmed = trimmed.substring(5)
 
-  if (award > 0) { connection.results.add(plugin, {pass: trimmed}) }
-  if (award < 0) { connection.results.add(plugin, {fail: trimmed}) }
+  if (award > 0) connection.results.add(this, { pass: trimmed })
+  if (award < 0) connection.results.add(this, { fail: trimmed })
 }
 
 exports.check_spammy_tld = function (mail_from, connection) {
-  const plugin = this
-  if (!plugin.cfg.spammy_tlds) return
+  if (!this.cfg.spammy_tlds) return
   if (mail_from.isNull()) return         // null sender (bounce)
 
   const from_tld = mail_from.host.split('.').pop()
-  // connection.logdebug(plugin, `from_tld: ${from_tld}`);
+  // connection.logdebug(this, `from_tld: ${from_tld}`);
 
-  const tld_penalty = parseFloat(plugin.cfg.spammy_tlds[from_tld] || 0)
+  const tld_penalty = parseFloat(this.cfg.spammy_tlds[from_tld] || 0)
   if (tld_penalty === 0) return
 
-  connection.results.incr(plugin, {score: tld_penalty})
-  connection.results.add(plugin, {fail: 'spammy.TLD'})
+  connection.results.incr(this, {score: tld_penalty})
+  connection.results.add(this, {fail: 'spammy.TLD'})
 }
 
 exports.check_syntax_RcptTo = function (connection) {
-  const plugin = this
-
   // look for an illegal (RFC 5321,(2)821) space in envelope recipient
   const full_rcpt = connection.current_line
-  if (full_rcpt.toUpperCase().substring(0,9) === 'RCPT TO:<') { return }
+  if (full_rcpt.toUpperCase().substring(0,9) === 'RCPT TO:<') return
 
-  connection.loginfo(plugin, `illegal envelope address format: ${full_rcpt}`)
-  connection.results.add(plugin, {fail: 'rfc5321.RcptTo'})
+  connection.loginfo(this, `illegal envelope address format: ${full_rcpt}`)
+  connection.results.add(this, {fail: 'rfc5321.RcptTo'})
 }
 
 exports.assemble_note_obj = function (prefix, key) {
@@ -967,34 +919,31 @@ exports.assemble_note_obj = function (prefix, key) {
       next = `${next}.${parts.shift()}`
     }
     note = note[next]
-    if (note === null || note === undefined) { break }
+    if (note === null || note === undefined) break
   }
   return note
 }
 
 exports.check_asn = function (connection, asnkey) {
-  const plugin = this
-  if (!plugin.db) return
+  if (!this.db) return
 
-  const report_as = { name: plugin.name }
+  const report_as = { name: this.name }
 
-  if (plugin.cfg.asn.report_as) {
-    report_as.name = plugin.cfg.asn.report_as
-  }
+  if (this.cfg.asn.report_as) report_as.name = this.cfg.asn.report_as
 
-  plugin.db.hgetall(asnkey, (err, res) => {
+  this.db.hgetall(asnkey, (err, res) => {
     if (err) {
-      connection.results.add(plugin, {err: err})
+      connection.results.add(this, {err: err})
       return
     }
 
     if (res === null) {
-      const expire = (plugin.cfg.redis.expire_days || 60) * 86400 // days
-      plugin.init_asn(asnkey, expire)
+      const expire = (this.cfg.redis.expire_days || 60) * 86400 // days
+      this.init_asn(asnkey, expire)
       return
     }
 
-    plugin.db.hincrby(asnkey, 'connections', 1)
+    this.db.hincrby(asnkey, 'connections', 1)
     const asn_score = parseInt(res.good || 0) - (res.bad || 0)
     const asn_results = {
       asn_score: asn_score,
@@ -1025,22 +974,18 @@ exports.check_asn = function (connection, asnkey) {
 }
 
 exports.init_ip = function (dbkey, rip, expire) {
-  const plugin = this
-  if (!plugin.db) return
-  plugin.db.multi()
+  if (!this.db) return
+  this.db.multi()
     .hmset(dbkey, {'bad': 0, 'good': 0, 'connections': 1})
     .expire(dbkey, expire)
     .exec()
 }
 
 exports.get_asn_key = function (connection) {
-  const plugin = this
-  if (!plugin.cfg.asn.enable) { return }
+  if (!this.cfg.asn.enable) return
   let asn = connection.results.get('asn')
-  if (!asn || !asn.asn) {
-    asn = connection.results.get('geoip')
-  }
-  if (!asn || !asn.asn || isNaN(asn.asn)) { return }
+  if (!asn || !asn.asn) asn = connection.results.get('geoip')
+  if (!asn || !asn.asn || isNaN(asn.asn)) return
   return `as${asn.asn}`
 }
 
