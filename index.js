@@ -9,27 +9,26 @@ const phase_prefixes = utils.to_object([
 ])
 
 exports.register = function () {
-  const plugin = this
 
-  plugin.inherits('haraka-plugin-redis')
+  this.inherits('haraka-plugin-redis')
 
   // set up defaults
-  plugin.deny_hooks = utils.to_object(
+  this.deny_hooks = utils.to_object(
     ['unrecognized_command','helo','data','data_post','queue','queue_outbound']
   )
-  plugin.deny_exclude_hooks = utils.to_object('rcpt_to queue queue_outbound')
-  plugin.deny_exclude_plugins = utils.to_object([
+  this.deny_exclude_hooks = utils.to_object('rcpt_to queue queue_outbound')
+  this.deny_exclude_plugins = utils.to_object([
     'access', 'helo.checks', 'data.headers', 'spamassassin',
     'mail_from.is_resolvable', 'clamd', 'tls'
   ])
 
-  plugin.load_karma_ini()
+  this.load_karma_ini()
 
-  plugin.register_hook('init_master',  'init_redis_plugin')
-  plugin.register_hook('init_child',   'init_redis_plugin')
+  this.register_hook('init_master',  'init_redis_plugin')
+  this.register_hook('init_child',   'init_redis_plugin')
 
-  plugin.register_hook('connect_init', 'results_init')
-  plugin.register_hook('connect_init', 'ip_history_from_redis')
+  this.register_hook('connect_init', 'results_init')
+  this.register_hook('connect_init', 'ip_history_from_redis')
 }
 
 exports.load_karma_ini = function () {
