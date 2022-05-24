@@ -4,6 +4,7 @@
 
 - remove lots of plugin=this
 - remove unnecessary braces and trailing ;
+- some promises.
 
 
 ## 1.0.14 - 2022-02-14
