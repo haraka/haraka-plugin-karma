@@ -7,7 +7,6 @@
     "test": "npx mocha",
     "lint": "npx eslint index.js test",
     "lintfix": "npx eslint --fix index.js test",
-    "cover": "npx istanbul cover npx mocha",
     "versions": "npx dependency-version-checker check"
   },
   "repository": {
@@ -27,7 +26,7 @@
     "address-rfc2821": "*",
     "haraka-constants": ">=1.0.2",
     "haraka-utils": "*",
-    "haraka-plugin-redis": "*"
+    "haraka-plugin-redis": "2"
   },
   "devDependencies": {
     "eslint": "8",

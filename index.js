@@ -91,7 +91,7 @@ exports.results_init = async function (next, connection) {
       const award = this.cfg.awards[key].toString()
       todo[key] = award
     }
-    connection.results.add(this, { score:0, todo: todo })
+    connection.results.add(this, { score:0, todo })
   }
   else {
     connection.results.add(this, { score:0 })
@@ -545,7 +545,7 @@ exports.ip_history_from_redis = function (next, connection) {
 
   plugin.db.hgetall(dbkey, (err, dbr) => {
     if (err) {
-      connection.results.add(plugin, {err: err})
+      connection.results.add(plugin, { err })
       return next()
     }
 
@@ -932,7 +932,7 @@ exports.check_asn = function (connection, asnkey) {
 
   this.db.hgetall(asnkey, (err, res) => {
     if (err) {
-      connection.results.add(this, {err: err})
+      connection.results.add(this, { err })
       return
     }
 
@@ -945,7 +945,7 @@ exports.check_asn = function (connection, asnkey) {
     this.db.hincrby(asnkey, 'connections', 1)
     const asn_score = parseInt(res.good || 0) - (res.bad || 0)
     const asn_results = {
-      asn_score: asn_score,
+      asn_score,
       asn_connections: res.connections,
       asn_good: res.good,
       asn_bad: res.bad,
