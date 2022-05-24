@@ -2,6 +2,7 @@ env:
   node: true
   es6: true
   mocha: true
+  es2020: true
 
 plugins: [ haraka ]
 
@@ -11,6 +12,8 @@ root: true
 
 rules:
   indent: [2, 2, { SwitchCase: 1 } ]
+  semi: [ error, never ]
+  semi-style: [ error, last ]
 
 globals:
   OK: true
