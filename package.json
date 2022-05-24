@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "npx mocha",
-    "lint": "npx eslint index.js test/*.js",
-    "lintfix": "npx eslint --fix index.js test/*.js",
+    "lint": "npx eslint index.js test",
+    "lintfix": "npx eslint --fix index.js test",
     "cover": "npx istanbul cover npx mocha",
     "versions": "npx dependency-version-checker check"
   },
@@ -30,9 +30,9 @@
     "haraka-plugin-redis": "*"
   },
   "devDependencies": {
-    "eslint": "^8",
+    "eslint": "8",
     "eslint-plugin-haraka": "*",
     "haraka-test-fixtures": "*",
-    "mocha": "^9"
+    "mocha": "9"
   }
 }
