@@ -8,18 +8,7 @@ env:
 jobs:
 
   lint:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [ 14 ]
-    steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-node@v2
-      name: Node.js ${{ matrix.node-version }}
-      with:
-        node-version: ${{ matrix.node-version }}
-    - run: npm install
-    - run: npm run lint
+    uses: haraka/.github/.github/workflows/lint.yml@master
 
   test:
     runs-on: ${{ matrix.os }}
