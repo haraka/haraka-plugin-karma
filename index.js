@@ -562,10 +562,8 @@ exports.ip_history_from_redis = function (next, connection) {
       .hIncrBy(dbkey, 'connections', 1)  // increment total conn
       .expire(dbkey, expire)             // extend expiration
       .exec()
-      .then(replies => {
-        console.log(replies)
-      }).catch(err2 => {
-        connection.results.add(plugin, {err: err2})
+      .catch(err => {
+        connection.results.add(plugin, { err })
       })
 
     const results = {
@@ -587,7 +585,7 @@ exports.ip_history_from_redis = function (next, connection) {
     connection.results.add(plugin, results)
 
     plugin.check_awards(connection)
-    return next()
+    next()
   })
     .catch(err => {
       connection.results.add(plugin, { err })
@@ -982,9 +980,9 @@ exports.check_asn = function (connection, asnkey) {
     })
 }
 
-exports.init_ip = function (dbkey, rip, expire) {
+exports.init_ip = async function (dbkey, rip, expire) {
   if (!this.db) return
-  this.db.multi()
+  await this.db.multi()
     .hmSet(dbkey, {'bad': 0, 'good': 0, 'connections': 1})
     .expire(dbkey, expire)
     .exec()
