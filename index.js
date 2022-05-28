@@ -2,6 +2,7 @@
 // karma - reward good and penalize bad mail senders
 
 const constants = require('haraka-constants')
+const redis     = require('redis')
 const utils     = require('haraka-utils')
 
 const phase_prefixes = utils.to_object([
@@ -104,8 +105,16 @@ exports.results_init = async function (next, connection) {
 
   if (!this.result_awards) return next()  // not configured
 
-  // subscribe to result_store publish messages
-  await this.redis_subscribe(connection, (channel, message) => {
+  if (connection.notes.redis) {
+    connection.logdebug(this, `redis already subscribed`);
+    return; // another plugin has already called this.
+  }
+
+  connection.notes.redis = redis.createClient(this.redisCfg.pubsub)
+  await connection.notes.redis.connect()
+
+  const pattern = this.get_redis_sub_channel(connection)
+  connection.notes.redis.pSubscribe(pattern, (message, channel) => {
     this.check_result(connection, message)
   })
 
@@ -543,23 +552,21 @@ exports.ip_history_from_redis = function (next, connection) {
   // redis plugin is emitting errors, no need to here
   if (!plugin.db) return next()
 
-  plugin.db.hgetall(dbkey, (err, dbr) => {
-    if (err) {
-      connection.results.add(plugin, { err })
-      return next()
-    }
-
+  plugin.db.hGetAll(dbkey).then(dbr => {
     if (dbr === null) {
       plugin.init_ip(dbkey, connection.remote.ip, expire)
       return next()
     }
 
     plugin.db.multi()
-      .hincrby(dbkey, 'connections', 1)  // increment total conn
+      .hIncrBy(dbkey, 'connections', 1)  // increment total conn
       .expire(dbkey, expire)             // extend expiration
-      .exec((err2, replies) => {
-        if (err2) connection.results.add(plugin, {err: err2})
-      })
+      .exec()
+        .then(replies => {
+            console.log(replies)
+        }).catch(err2 => {
+          connection.results.add(plugin, {err: err2})
+        })
 
     const results = {
       good: dbr.good,
@@ -582,6 +589,11 @@ exports.ip_history_from_redis = function (next, connection) {
     plugin.check_awards(connection)
     return next()
   })
+    .catch(err => {
+      connection.results.add(plugin, { err })
+      next()
+    })
+
 }
 
 exports.hook_mail = function (next, connection, params) {
@@ -665,10 +677,10 @@ exports.increment = function (connection, key, val) {
   const plugin = this
   if (!plugin.db) return
 
-  plugin.db.hincrby(`karma|${connection.remote.ip}`, key, 1)
+  plugin.db.hIncrBy(`karma|${connection.remote.ip}`, key, 1)
 
   const asnkey = plugin.get_asn_key(connection)
-  if (asnkey) plugin.db.hincrby(asnkey, key, 1)
+  if (asnkey) plugin.db.hIncrBy(asnkey, key, 1)
 }
 
 exports.hook_disconnect = function (next, connection) {
@@ -930,19 +942,14 @@ exports.check_asn = function (connection, asnkey) {
 
   if (this.cfg.asn.report_as) report_as.name = this.cfg.asn.report_as
 
-  this.db.hgetall(asnkey, (err, res) => {
-    if (err) {
-      connection.results.add(this, { err })
-      return
-    }
-
+  this.db.hGetAll(asnkey).then(res => {
     if (res === null) {
       const expire = (this.cfg.redis.expire_days || 60) * 86400 // days
       this.init_asn(asnkey, expire)
       return
     }
 
-    this.db.hincrby(asnkey, 'connections', 1)
+    this.db.hIncrBy(asnkey, 'connections', 1)
     const asn_score = parseInt(res.good || 0) - (res.bad || 0)
     const asn_results = {
       asn_score,
@@ -970,12 +977,15 @@ exports.check_asn = function (connection, asnkey) {
 
     connection.results.add(report_as, asn_results)
   })
+    .catch(err => {
+      connection.results.add(this, { err })
+    })
 }
 
 exports.init_ip = function (dbkey, rip, expire) {
   if (!this.db) return
   this.db.multi()
-    .hmset(dbkey, {'bad': 0, 'good': 0, 'connections': 1})
+    .hmSet(dbkey, {'bad': 0, 'good': 0, 'connections': 1})
     .expire(dbkey, expire)
     .exec()
 }
@@ -992,7 +1002,7 @@ exports.init_asn = function (asnkey, expire) {
   const plugin = this
   if (!plugin.db) return
   plugin.db.multi()
-    .hmset(asnkey, {'bad': 0, 'good': 0, 'connections': 1})
+    .hmSet(asnkey, {'bad': 0, 'good': 0, 'connections': 1})
     .expire(asnkey, expire * 2)    // keep ASN longer
     .exec()
 }

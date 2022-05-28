@@ -1,4 +1,11 @@
 
+### 2.0.2 - 2022-05-27
+
+- fix: depend directly on redis
+- fix: update redis command names for v4 compatibility
+- fix: update redis commands to be async
+
+
 ### 2.0.1 - 2022-05-27
 
 - chore(ci): depend on shared GHA workflows

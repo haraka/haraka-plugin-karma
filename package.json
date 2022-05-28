@@ -1,6 +1,6 @@
 {
   "name": "haraka-plugin-karma",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "A heuristics scoring and reputation engine for SMTP connections",
   "main": "index.js",
   "scripts": {
@@ -26,7 +26,8 @@
     "address-rfc2821": "*",
     "haraka-constants": ">=1.0.2",
     "haraka-utils": "*",
-    "haraka-plugin-redis": "2"
+    "haraka-plugin-redis": "2",
+    "redis": "4"
   },
   "devDependencies": {
     "eslint": "8",

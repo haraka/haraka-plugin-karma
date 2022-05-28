@@ -762,7 +762,7 @@ describe('tls', function () {
   })
 })
 
-describe('skiping_hooks', function () {
+describe('skipping hooks', function () {
   beforeEach(_set_up)
 
   it('notes.disable_karma', function (done) {
