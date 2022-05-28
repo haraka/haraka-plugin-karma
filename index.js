@@ -106,15 +106,15 @@ exports.results_init = async function (next, connection) {
   if (!this.result_awards) return next()  // not configured
 
   if (connection.notes.redis) {
-    connection.logdebug(this, `redis already subscribed`);
-    return; // another plugin has already called this.
+    connection.logdebug(this, `redis already subscribed`)
+    return // another plugin has already called this.
   }
 
   connection.notes.redis = redis.createClient(this.redisCfg.pubsub)
   await connection.notes.redis.connect()
 
   const pattern = this.get_redis_sub_channel(connection)
-  connection.notes.redis.pSubscribe(pattern, (message, channel) => {
+  connection.notes.redis.pSubscribe(pattern, (message) => {
     this.check_result(connection, message)
   })
 
@@ -562,11 +562,11 @@ exports.ip_history_from_redis = function (next, connection) {
       .hIncrBy(dbkey, 'connections', 1)  // increment total conn
       .expire(dbkey, expire)             // extend expiration
       .exec()
-        .then(replies => {
-            console.log(replies)
-        }).catch(err2 => {
-          connection.results.add(plugin, {err: err2})
-        })
+      .then(replies => {
+        console.log(replies)
+      }).catch(err2 => {
+        connection.results.add(plugin, {err: err2})
+      })
 
     const results = {
       good: dbr.good,
