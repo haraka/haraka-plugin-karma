@@ -2,6 +2,11 @@
 #### N.N.N - YYYY-MM-DD
 
 
+#### 2.0.4 - 2022-05-28
+
+- use .release as submodule
+
+
 #### 2.0.3 - 2022-05-28
 
 - fix: depend directly on redis
