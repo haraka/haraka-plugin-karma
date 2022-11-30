@@ -2,6 +2,13 @@
 #### N.N.N - YYYY-MM-DD
 
 
+### [2.1.0] - 2022-11-29
+
+- fix: in disconnect, call redis_unsub after skip check
+- dep(redis): 4 -> 4.1
+- dep(pi-redis): 2 -> 2.0.5
+
+
 #### 2.0.4 - 2022-05-28
 
 - use .release as submodule
@@ -97,3 +104,4 @@
 #### 1.0.2 - 2017-01-24
 
 - use redis.merge_redis_ini()
+[2.1.0]: https://github.com/haraka/haraka-plugin-karma/releases/tag/2.1.0
