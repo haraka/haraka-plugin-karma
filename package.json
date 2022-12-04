@@ -27,7 +27,7 @@
     "haraka-constants": ">=1.0.2",
     "haraka-utils": "*",
     "haraka-plugin-redis": "2.0.5",
-    "redis": "4.1"
+    "redis": "4.5.1"
   },
   "devDependencies": {
     "eslint": "8",
