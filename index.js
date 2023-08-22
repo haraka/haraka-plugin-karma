@@ -155,18 +155,18 @@ exports.check_result = function (connection, message) {
   if (!this.result_awards[m.plugin]) return  // no awards for plugin
 
   for (const r of Object.keys(m.result)) {  // each result in mess
-    if (r === 'emit') return  // r: pass, fail, skip, err, ...
+    if (r === 'emit') continue  // r: pass, fail, skip, err, ...
 
     const pi_prop = this.result_awards[m.plugin][r]
-    if (!pi_prop) return      // no award for this plugin property
+    if (!pi_prop) continue      // no award for this plugin property
 
     const thisResult = m.result[r]
     // ignore empty arrays, objects, and strings
-    if (Array.isArray(thisResult) && thisResult.length === 0) return
+    if (Array.isArray(thisResult) && thisResult.length === 0) continue
     if (typeof thisResult === 'object' && !Object.keys(thisResult).length) {
-      return
+      continue
     }
-    if (typeof thisResult === 'string' && !thisResult) return // empty
+    if (typeof thisResult === 'string' && !thisResult) continue // empty
 
     // do any award conditions match this result?
     for (let i=0; i < pi_prop.length; i++) {     // each award...
