@@ -2,6 +2,11 @@
 #### N.N.N - YYYY-MM-DD
 
 
+### [2.1.1] - 2023-08-22
+
+- fix: check_result unexpected return #50
+
+
 ### [2.1.0] - 2022-11-29
 
 - fix: in disconnect, call redis_unsub after skip check
@@ -105,3 +110,4 @@
 
 - use redis.merge_redis_ini()
 [2.1.0]: https://github.com/haraka/haraka-plugin-karma/releases/tag/2.1.0
+[2.1.1]: https://github.com/haraka/haraka-plugin-karma/releases/tag/2.1.1
