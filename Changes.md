@@ -16,8 +16,6 @@
 
 ### [2.1.1] - 2023-08-22
 
-- ci: use shared configs
-- style(es6): replace for..i with for...of
 - fix: check_result unexpected return #50
 
 
