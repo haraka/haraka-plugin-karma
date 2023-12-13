@@ -155,18 +155,18 @@ exports.check_result = function (connection, message) {
   if (!this.result_awards[m.plugin]) return  // no awards for plugin
 
   for (const r of Object.keys(m.result)) {  // each result in mess
-    if (r === 'emit') return  // r: pass, fail, skip, err, ...
+    if (r === 'emit') continue  // r: pass, fail, skip, err, ...
 
     const pi_prop = this.result_awards[m.plugin][r]
-    if (!pi_prop) return      // no award for this plugin property
+    if (!pi_prop) continue      // no award for this plugin property
 
     const thisResult = m.result[r]
     // ignore empty arrays, objects, and strings
-    if (Array.isArray(thisResult) && thisResult.length === 0) return
+    if (Array.isArray(thisResult) && thisResult.length === 0) continue
     if (typeof thisResult === 'object' && !Object.keys(thisResult).length) {
-      return
+      continue
     }
-    if (typeof thisResult === 'string' && !thisResult) return // empty
+    if (typeof thisResult === 'string' && !thisResult) continue // empty
 
     // do any award conditions match this result?
     for (const thisAward of pi_prop) {     // each award...
@@ -517,6 +517,12 @@ exports.hook_queue = function (next, connection) {
   this.should_we_deny(next, connection, 'queue')
 }
 
+exports.hook_queue_outbound = function (next, connection) {
+  if (this.should_we_skip(connection)) return next()
+
+  this.should_we_deny(next, connection, 'queue_outbound')
+}
+
 exports.hook_reset_transaction = function (next, connection) {
   if (this.should_we_skip(connection)) return next()
 
@@ -543,15 +549,15 @@ exports.hook_unrecognized_command = function (next, connection, params) {
 exports.ip_history_from_redis = function (next, connection) {
   const plugin = this
 
-  if (plugin.should_we_skip(connection)) return next()
+  if (this.should_we_skip(connection)) return next()
 
-  const expire = (plugin.cfg.redis.expire_days || 60) * 86400 // to days
+  const expire = (this.cfg.redis.expire_days || 60) * 86400 // to days
   const dbkey  = `karma|${connection.remote.ip}`
 
   // redis plugin is emitting errors, no need to here
-  if (!plugin.db) return next()
+  if (!this.db) return next()
 
-  plugin.db.hGetAll(dbkey).then(dbr => {
+  this.db.hGetAll(dbkey).then(dbr => {
     if (dbr === null) {
       plugin.init_ip(dbkey, connection.remote.ip, expire)
       return next()
@@ -590,7 +596,6 @@ exports.ip_history_from_redis = function (next, connection) {
       connection.results.add(plugin, { err })
       next()
     })
-
 }
 
 exports.hook_mail = function (next, connection, params) {
@@ -671,42 +676,39 @@ exports.hook_data_post = function (next, connection) {
 }
 
 exports.increment = function (connection, key, val) {
-  const plugin = this
-  if (!plugin.db) return
+  if (!this.db) return
 
-  plugin.db.hIncrBy(`karma|${connection.remote.ip}`, key, 1)
+  this.db.hIncrBy(`karma|${connection.remote.ip}`, key, 1)
 
-  const asnkey = plugin.get_asn_key(connection)
-  if (asnkey) plugin.db.hIncrBy(asnkey, key, 1)
+  const asnkey = this.get_asn_key(connection)
+  if (asnkey) this.db.hIncrBy(asnkey, key, 1)
 }
 
 exports.hook_disconnect = function (next, connection) {
-  const plugin = this
+  if (this.should_we_skip(connection)) return next()
 
-  if (plugin.should_we_skip(connection)) return next()
-
-  plugin.redis_unsubscribe(connection)
+  this.redis_unsubscribe(connection)
 
   const k = connection.results.get('karma')
   if (!k || k.score === undefined) {
-    connection.results.add(plugin, {err: 'karma results missing'})
+    connection.results.add(this, {err: 'karma results missing'})
     return next()
   }
 
-  if (!plugin.cfg.thresholds) {
-    plugin.check_awards(connection)
-    connection.results.add(plugin, {msg: 'no action', emit: true })
+  if (!this.cfg.thresholds) {
+    this.check_awards(connection)
+    connection.results.add(this, {msg: 'no action', emit: true })
     return next()
   }
 
-  if (k.score > (plugin.cfg.thresholds.positive || 3)) {
-    plugin.increment(connection, 'good', 1)
+  if (k.score > (this.cfg.thresholds.positive || 3)) {
+    this.increment(connection, 'good', 1)
   }
   if (k.score < 0) {
-    plugin.increment(connection, 'bad', 1)
+    this.increment(connection, 'bad', 1)
   }
 
-  connection.results.add(plugin, {emit: true })
+  connection.results.add(this, {emit: true })
   next()
 }
 
@@ -738,11 +740,11 @@ exports.get_award_loc_from_results = function (connection, loc_bits) {
   let obj
   if (connection.transaction) obj = connection.transaction.results.get(pi_name)
 
-  // connection.logdebug(plugin, `no txn results: ${pi_name}`);
+  // connection.logdebug(this, `no txn results: ${pi_name}`);
   if (!obj) obj = connection.results.get(pi_name)
   if (!obj) return
 
-  // connection.logdebug(plugin, `found results for ${pi_name}, ${notekey}`);
+  // connection.logdebug(this, `found results for ${pi_name}, ${notekey}`);
   if (notekey) return obj[notekey]
   return obj
 }
@@ -996,9 +998,8 @@ exports.get_asn_key = function (connection) {
 }
 
 exports.init_asn = function (asnkey, expire) {
-  const plugin = this
-  if (!plugin.db) return
-  plugin.db.multi()
+  if (!this.db) return
+  this.db.multi()
     .hmSet(asnkey, {'bad': 0, 'good': 0, 'connections': 1})
     .expire(asnkey, expire * 2)    // keep ASN longer
     .exec()

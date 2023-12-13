@@ -2,10 +2,16 @@
 #### N.N.N - YYYY-MM-DD
 
 
+### [2.1.2] - 2023-12-11
+
+- config: update several plugin names
+- style(es6): refer to plugin as 'this'
+
 ### [2.1.1] - 2023-12-12
 
 - ci: use shared configs
 - style(es6): replace for..i with for...of
+- fix: check_result unexpected return #50
 
 
 ### [2.1.0] - 2022-11-29
@@ -112,3 +118,4 @@
 - use redis.merge_redis_ini()
 [2.1.0]: https://github.com/haraka/haraka-plugin-karma/releases/tag/2.1.0
 [2.1.1]: https://github.com/haraka/haraka-plugin-karma/releases/tag/2.1.1
+[2.1.2]: https://github.com/haraka/haraka-plugin-karma/releases/tag/2.1.2
