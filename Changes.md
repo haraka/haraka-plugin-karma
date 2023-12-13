@@ -1,13 +1,20 @@
 
 #### N.N.N - YYYY-MM-DD
 
+### [2.1.3] - 2023-12-12
+
+- ci: use shared configs
+- style(es6): replace for..i with for...of
+- deps(*): bump versions to latest
+
 
 ### [2.1.2] - 2023-12-11
 
 - config: update several plugin names
 - style(es6): refer to plugin as 'this'
 
-### [2.1.1] - 2023-12-12
+
+### [2.1.1] - 2023-08-22
 
 - ci: use shared configs
 - style(es6): replace for..i with for...of
