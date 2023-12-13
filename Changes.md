@@ -4,18 +4,8 @@
 
 ### [2.1.1] - 2023-12-12
 
-#### Added
-
-- 
-
-#### Fixed
-
-- 
-
-#### Changed
-
-- 
-
+- ci: use shared configs
+- style(es6): replace for..i with for...of
 
 
 ### [2.1.0] - 2022-11-29
