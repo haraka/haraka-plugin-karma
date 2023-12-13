@@ -1,6 +1,12 @@
 
 #### N.N.N - YYYY-MM-DD
 
+### [2.1.3] - 2023-12-12
+
+- ci: use shared configs
+- style(es6): replace for..i with for...of
+- deps(*): bump versions to latest
+
 
 ### [2.1.2] - 2023-12-11
 
