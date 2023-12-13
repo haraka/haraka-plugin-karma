@@ -169,8 +169,7 @@ exports.check_result = function (connection, message) {
     if (typeof thisResult === 'string' && !thisResult) return // empty
 
     // do any award conditions match this result?
-    for (let i=0; i < pi_prop.length; i++) {     // each award...
-      const thisAward = pi_prop[i]
+    for (const thisAward of pi_prop) {     // each award...
       // { id: '011', operator: 'equals', value: 'all_bad', award: '-2'}
       const thisResArr = this.result_as_array(thisResult)
       switch (thisAward.operator) {
@@ -223,8 +222,8 @@ exports.check_result_asn = function (asn, conn) {
 
 exports.check_result_lt = function (thisResult, thisAward, conn) {
 
-  for (let j=0; j < thisResult.length; j++) {
-    const tr = parseFloat(thisResult[j])
+  for (const element of thisResult) {
+    const tr = parseFloat(element)
     if (tr >= parseFloat(thisAward.value)) continue
     if (conn.results.has('karma', 'awards', thisAward.id)) continue
 
@@ -235,8 +234,8 @@ exports.check_result_lt = function (thisResult, thisAward, conn) {
 
 exports.check_result_gt = function (thisResult, thisAward, conn) {
 
-  for (let j=0; j < thisResult.length; j++) {
-    const tr = parseFloat(thisResult[j])
+  for (const element of thisResult) {
+    const tr = parseFloat(element)
     if (tr <= parseFloat(thisAward.value)) continue
     if (conn.results.has('karma', 'awards', thisAward.id)) continue
 
@@ -247,12 +246,12 @@ exports.check_result_gt = function (thisResult, thisAward, conn) {
 
 exports.check_result_equal = function (thisResult, thisAward, conn) {
 
-  for (let j=0; j < thisResult.length; j++) {
+  for (const element of thisResult) {
     if (thisAward.value === 'true') {
-      if (!thisResult[j]) continue
+      if (!element) continue
     }
     else {
-      if (thisResult[j] != thisAward.value) continue
+      if (element != thisAward.value) continue
     }
     if (!/auth/.test(thisAward.plugin)) {
       // only auth attempts are scored > 1x
@@ -267,8 +266,8 @@ exports.check_result_equal = function (thisResult, thisAward, conn) {
 exports.check_result_match = function (thisResult, thisAward, conn) {
   const re = new RegExp(thisAward.value, 'i')
 
-  for (let i=0; i < thisResult.length; i++) {
-    if (!re.test(thisResult[i])) continue
+  for (const element of thisResult) {
+    if (!re.test(element)) continue
     if (conn.results.has('karma', 'awards', thisAward.id)) continue
 
     conn.results.incr(this, {score: thisAward.award})
@@ -278,20 +277,20 @@ exports.check_result_match = function (thisResult, thisAward, conn) {
 
 exports.check_result_length = function (thisResult, thisAward, conn) {
 
-  for (let j=0; j < thisResult.length; j++) {
+  for (const element of thisResult) {
     const [operator, qty] = thisAward.value.split(/\s+/) // requires node 6+
 
     switch (operator) {
       case 'eq':
       case 'equal':
       case 'equals':
-        if (parseInt(thisResult[j], 10) != parseInt(qty, 10)) continue
+        if (parseInt(element, 10) != parseInt(qty, 10)) continue
         break
       case 'gt':
-        if (parseInt(thisResult[j], 10) <= parseInt(qty, 10)) continue
+        if (parseInt(element, 10) <= parseInt(qty, 10)) continue
         break
       case 'lt':
-        if (parseInt(thisResult[j], 10) >= parseInt(qty, 10)) continue
+        if (parseInt(element, 10) >= parseInt(qty, 10)) continue
         break
       default:
         conn.results.add(this, { err: `invalid operator: ${operator}` })
