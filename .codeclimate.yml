@@ -1,9 +1,9 @@
 engines:
   eslint:
     enabled: true
-    channel: "eslint-8"
+    channel: 'eslint-8'
     config:
-      config: ".eslintrc.yaml"
+      config: '.eslintrc.yaml'
 
 checks:
   return-statements:
@@ -21,5 +21,5 @@ checks:
       threshold: 900
 
 ratings:
-   paths:
-   - "**.js"
+  paths:
+    - '**.js'

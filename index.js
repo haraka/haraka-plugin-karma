@@ -2,31 +2,44 @@
 // karma - reward good and penalize bad mail senders
 
 const constants = require('haraka-constants')
-const redis     = require('redis')
-const utils     = require('haraka-utils')
+const redis = require('redis')
+const utils = require('haraka-utils')
 
 const phase_prefixes = utils.to_object([
-  'connect','helo','mail_from','rcpt_to','data'
+  'connect',
+  'helo',
+  'mail_from',
+  'rcpt_to',
+  'data',
 ])
 
 exports.register = function () {
-
   this.inherits('haraka-plugin-redis')
 
   // set up defaults
-  this.deny_hooks = utils.to_object(
-    ['unrecognized_command','helo','data','data_post','queue','queue_outbound']
-  )
+  this.deny_hooks = utils.to_object([
+    'unrecognized_command',
+    'helo',
+    'data',
+    'data_post',
+    'queue',
+    'queue_outbound',
+  ])
   this.deny_exclude_hooks = utils.to_object('rcpt_to queue queue_outbound')
   this.deny_exclude_plugins = utils.to_object([
-    'access', 'helo.checks', 'data.headers', 'spamassassin',
-    'mail_from.is_resolvable', 'clamd', 'tls'
+    'access',
+    'helo.checks',
+    'data.headers',
+    'spamassassin',
+    'mail_from.is_resolvable',
+    'clamd',
+    'tls',
   ])
 
   this.load_karma_ini()
 
-  this.register_hook('init_master',  'init_redis_plugin')
-  this.register_hook('init_child',   'init_redis_plugin')
+  this.register_hook('init_master', 'init_redis_plugin')
+  this.register_hook('init_child', 'init_redis_plugin')
 
   this.register_hook('connect_init', 'results_init')
   this.register_hook('connect_init', 'ip_history_from_redis')
@@ -35,13 +48,15 @@ exports.register = function () {
 exports.load_karma_ini = function () {
   const plugin = this
 
-  plugin.cfg = plugin.config.get('karma.ini', {
-    booleans: [
-      '+asn.enable',
-    ],
-  }, function () {
-    plugin.load_karma_ini()
-  })
+  plugin.cfg = plugin.config.get(
+    'karma.ini',
+    {
+      booleans: ['+asn.enable'],
+    },
+    function () {
+      plugin.load_karma_ini()
+    },
+  )
 
   plugin.merge_redis_ini()
 
@@ -73,7 +88,6 @@ exports.load_karma_ini = function () {
 }
 
 exports.results_init = async function (next, connection) {
-
   if (this.should_we_skip(connection)) {
     connection.logdebug(this, 'skipping')
     return next()
@@ -81,7 +95,7 @@ exports.results_init = async function (next, connection) {
 
   if (connection.results.get('karma')) {
     connection.logerror(this, 'this should never happen')
-    return next()    // init once per connection
+    return next() // init once per connection
   }
 
   if (this.cfg.awards) {
@@ -92,10 +106,9 @@ exports.results_init = async function (next, connection) {
       const award = this.cfg.awards[key].toString()
       todo[key] = award
     }
-    connection.results.add(this, { score:0, todo })
-  }
-  else {
-    connection.results.add(this, { score:0 })
+    connection.results.add(this, { score: 0, todo })
+  } else {
+    connection.results.add(this, { score: 0 })
   }
 
   if (!connection.server.notes.redis) {
@@ -103,7 +116,7 @@ exports.results_init = async function (next, connection) {
     return next()
   }
 
-  if (!this.result_awards) return next()  // not configured
+  if (!this.result_awards) return next() // not configured
 
   if (connection.notes.redis) {
     connection.logdebug(this, `redis already subscribed`)
@@ -128,9 +141,8 @@ exports.preparse_result_awards = function () {
   // arrange results for rapid traversal by check_result() :
   // ex: karma.result_awards.clamd.fail = { .... }
   for (const anum of Object.keys(cra)) {
-
-    const [pi_name, prop, operator, value, award, reason, resolv]
-      = cra[anum].split(/(?:\s*\|\s*)/)
+    const [pi_name, prop, operator, value, award, reason, resolv] =
+      cra[anum].split(/(?:\s*\|\s*)/)
 
     const ra = this.result_awards
 
@@ -143,7 +155,6 @@ exports.preparse_result_awards = function () {
 }
 
 exports.check_result = function (connection, message) {
-
   // connection.loginfo(this, message);
   // {"plugin":"karma","result":{"fail":"spamassassin.hits"}}
   // {"plugin":"geoip","result":{"country":"CN"}}
@@ -152,13 +163,14 @@ exports.check_result = function (connection, message) {
   if (m && m.result && m.result.asn) {
     this.check_result_asn(m.result.asn, connection)
   }
-  if (!this.result_awards[m.plugin]) return  // no awards for plugin
+  if (!this.result_awards[m.plugin]) return // no awards for plugin
 
-  for (const r of Object.keys(m.result)) {  // each result in mess
-    if (r === 'emit') continue  // r: pass, fail, skip, err, ...
+  for (const r of Object.keys(m.result)) {
+    // each result in mess
+    if (r === 'emit') continue // r: pass, fail, skip, err, ...
 
     const pi_prop = this.result_awards[m.plugin][r]
-    if (!pi_prop) continue      // no award for this plugin property
+    if (!pi_prop) continue // no award for this plugin property
 
     const thisResult = m.result[r]
     // ignore empty arrays, objects, and strings
@@ -169,7 +181,8 @@ exports.check_result = function (connection, message) {
     if (typeof thisResult === 'string' && !thisResult) continue // empty
 
     // do any award conditions match this result?
-    for (const thisAward of pi_prop) {     // each award...
+    for (const thisAward of pi_prop) {
+      // each award...
       // { id: '011', operator: 'equals', value: 'all_bad', award: '-2'}
       const thisResArr = this.result_as_array(thisResult)
       switch (thisAward.operator) {
@@ -196,14 +209,13 @@ exports.check_result = function (connection, message) {
 }
 
 exports.result_as_array = function (result) {
-
   if (typeof result === 'string') return [result]
   if (typeof result === 'number') return [result]
   if (typeof result === 'boolean') return [result]
   if (Array.isArray(result)) return result
   if (typeof result === 'object') {
     const array = []
-    Object.keys(result).forEach(tr => {
+    Object.keys(result).forEach((tr) => {
       array.push(result[tr])
     })
     return array
@@ -216,41 +228,37 @@ exports.check_result_asn = function (asn, conn) {
   if (!this.cfg.asn_awards) return
   if (!this.cfg.asn_awards[asn]) return
 
-  conn.results.incr(this, {score: this.cfg.asn_awards[asn]})
-  conn.results.push(this, {fail: 'asn_awards'})
+  conn.results.incr(this, { score: this.cfg.asn_awards[asn] })
+  conn.results.push(this, { fail: 'asn_awards' })
 }
 
 exports.check_result_lt = function (thisResult, thisAward, conn) {
-
   for (const element of thisResult) {
     const tr = parseFloat(element)
     if (tr >= parseFloat(thisAward.value)) continue
     if (conn.results.has('karma', 'awards', thisAward.id)) continue
 
-    conn.results.incr(this, {score: thisAward.award})
-    conn.results.push(this, {awards: thisAward.id})
+    conn.results.incr(this, { score: thisAward.award })
+    conn.results.push(this, { awards: thisAward.id })
   }
 }
 
 exports.check_result_gt = function (thisResult, thisAward, conn) {
-
   for (const element of thisResult) {
     const tr = parseFloat(element)
     if (tr <= parseFloat(thisAward.value)) continue
     if (conn.results.has('karma', 'awards', thisAward.id)) continue
 
-    conn.results.incr(this, {score: thisAward.award})
-    conn.results.push(this, {awards: thisAward.id})
+    conn.results.incr(this, { score: thisAward.award })
+    conn.results.push(this, { awards: thisAward.id })
   }
 }
 
 exports.check_result_equal = function (thisResult, thisAward, conn) {
-
   for (const element of thisResult) {
     if (thisAward.value === 'true') {
       if (!element) continue
-    }
-    else {
+    } else {
       if (element != thisAward.value) continue
     }
     if (!/auth/.test(thisAward.plugin)) {
@@ -258,8 +266,8 @@ exports.check_result_equal = function (thisResult, thisAward, conn) {
       if (conn.results.has('karma', 'awards', thisAward.id)) continue
     }
 
-    conn.results.incr(this, {score: thisAward.award})
-    conn.results.push(this, {awards: thisAward.id})
+    conn.results.incr(this, { score: thisAward.award })
+    conn.results.push(this, { awards: thisAward.id })
   }
 }
 
@@ -270,13 +278,12 @@ exports.check_result_match = function (thisResult, thisAward, conn) {
     if (!re.test(element)) continue
     if (conn.results.has('karma', 'awards', thisAward.id)) continue
 
-    conn.results.incr(this, {score: thisAward.award})
-    conn.results.push(this, {awards: thisAward.id})
+    conn.results.incr(this, { score: thisAward.award })
+    conn.results.push(this, { awards: thisAward.id })
   }
 }
 
 exports.check_result_length = function (thisResult, thisAward, conn) {
-
   for (const element of thisResult) {
     const [operator, qty] = thisAward.value.split(/\s+/) // requires node 6+
 
@@ -297,13 +304,12 @@ exports.check_result_length = function (thisResult, thisAward, conn) {
         continue
     }
 
-    conn.results.incr(this, {score:  thisAward.award})
-    conn.results.push(this, {awards: thisAward.id   })
+    conn.results.incr(this, { score: thisAward.award })
+    conn.results.push(this, { awards: thisAward.id })
   }
 }
 
 exports.check_result_exists = function (thisResult, thisAward, conn) {
-
   /* eslint-disable no-unused-vars */
   for (const r of thisResult) {
     const [operator, qty] = thisAward.value.split(/\s+/)
@@ -317,18 +323,17 @@ exports.check_result_exists = function (thisResult, thisAward, conn) {
         continue
     }
 
-    conn.results.incr(this, {score: thisAward.award})
-    conn.results.push(this, {awards: thisAward.id})
+    conn.results.incr(this, { score: thisAward.award })
+    conn.results.push(this, { awards: thisAward.id })
   }
 }
 
 exports.apply_tarpit = function (connection, hook, score, next) {
-
   if (!this.cfg.tarpit) return next() // tarpit disabled in config
 
   // If tarpit is enabled on the reset_transaction hook, Haraka doesn't
   // wait. Then bad things happen, like a Haraka crash.
-  if (utils.in_array(hook, ['reset_transaction','queue'])) return next()
+  if (utils.in_array(hook, ['reset_transaction', 'queue'])) return next()
 
   // no delay for senders with good karma
   const k = connection.results.get('karma')
@@ -347,17 +352,18 @@ exports.apply_tarpit = function (connection, hook, score, next) {
 }
 
 exports.tarpit_delay = function (score, connection, hook, k) {
-
   if (this.cfg.tarpit.delay && parseFloat(this.cfg.tarpit.delay)) {
     connection.logdebug(this, 'static tarpit')
     return parseFloat(this.cfg.tarpit.delay)
   }
 
-  const delay = score * -1   // progressive tarpit
+  const delay = score * -1 // progressive tarpit
 
   // detect roaming users based on MSA ports that require auth
-  if (utils.in_array(connection.local.port, [587,465]) &&
-    utils.in_array(hook, ['ehlo','connect'])) {
+  if (
+    utils.in_array(connection.local.port, [587, 465]) &&
+    utils.in_array(hook, ['ehlo', 'connect'])
+  ) {
     return this.tarpit_delay_msa(connection, delay, k)
   }
 
@@ -376,7 +382,7 @@ exports.tarpit_delay_msa = function (connection, delay, k) {
   delay = parseFloat(delay)
 
   // Reduce delay for good history
-  const history = ((k.good || 0) - (k.bad || 0))
+  const history = (k.good || 0) - (k.bad || 0)
   if (history > 0) {
     delay = delay - 2
     connection.logdebug(this, `${trg} history: ${delay}`)
@@ -409,12 +415,12 @@ exports.should_we_deny = function (next, connection, hook) {
   const r = connection.results.get('karma')
   if (!r) return next()
 
-  this.check_awards(connection)  // update awards first
+  this.check_awards(connection) // update awards first
 
   const score = parseFloat(r.score)
-  if (isNaN(score))  {
+  if (isNaN(score)) {
     connection.logerror(this, 'score is NaN')
-    connection.results.add(this, {score: 0})
+    connection.results.add(this, { score: 0 })
     return next()
   }
 
@@ -450,10 +456,10 @@ exports.hook_deny = function (next, connection, params) {
 
   // let pi_deny     = params[0];  // (constants.deny, denysoft, ok)
   // let pi_message  = params[1];
-  const pi_name     = params[2]
+  const pi_name = params[2]
   // let pi_function = params[3];
   // let pi_params   = params[4];
-  const pi_hook     = params[5]
+  const pi_hook = params[5]
 
   // exceptions, whose 'DENY' should not be captured
   if (pi_name) {
@@ -468,7 +474,7 @@ exports.hook_deny = function (next, connection, params) {
   connection.results.add(this, { msg: `deny: ${pi_name}` })
   connection.results.incr(this, { score: -2 })
 
-  next(constants.OK)  // resume the connection
+  next(constants.OK) // resume the connection
 }
 
 exports.hook_connect = function (next, connection) {
@@ -526,12 +532,11 @@ exports.hook_queue_outbound = function (next, connection) {
 exports.hook_reset_transaction = function (next, connection) {
   if (this.should_we_skip(connection)) return next()
 
-  connection.results.add(this, {emit: true})
+  connection.results.add(this, { emit: true })
   this.should_we_deny(next, connection, 'reset_transaction')
 }
 
 exports.hook_unrecognized_command = function (next, connection, params) {
-
   if (this.should_we_skip(connection)) return next()
 
   // in case karma is in config/plugins before tls
@@ -540,8 +545,8 @@ exports.hook_unrecognized_command = function (next, connection, params) {
   // in case karma is in config/plugins before AUTH plugin(s)
   if (connection.notes.authenticating) return next()
 
-  connection.results.incr(this, {score: -1})
-  connection.results.add(this, {fail: `cmd:(${params})`})
+  connection.results.incr(this, { score: -1 })
+  connection.results.add(this, { fail: `cmd:(${params})` })
 
   return this.should_we_deny(next, connection, 'unrecognized_command')
 }
@@ -552,72 +557,74 @@ exports.ip_history_from_redis = function (next, connection) {
   if (this.should_we_skip(connection)) return next()
 
   const expire = (this.cfg.redis.expire_days || 60) * 86400 // to days
-  const dbkey  = `karma|${connection.remote.ip}`
+  const dbkey = `karma|${connection.remote.ip}`
 
   // redis plugin is emitting errors, no need to here
   if (!this.db) return next()
 
-  this.db.hGetAll(dbkey).then(dbr => {
-    if (dbr === null) {
-      plugin.init_ip(dbkey, connection.remote.ip, expire)
-      return next()
-    }
+  this.db
+    .hGetAll(dbkey)
+    .then((dbr) => {
+      if (dbr === null) {
+        plugin.init_ip(dbkey, connection.remote.ip, expire)
+        return next()
+      }
 
-    plugin.db.multi()
-      .hIncrBy(dbkey, 'connections', 1)  // increment total conn
-      .expire(dbkey, expire)             // extend expiration
-      .exec()
-      .catch(err => {
-        connection.results.add(plugin, { err })
-      })
+      plugin.db
+        .multi()
+        .hIncrBy(dbkey, 'connections', 1) // increment total conn
+        .expire(dbkey, expire) // extend expiration
+        .exec()
+        .catch((err) => {
+          connection.results.add(plugin, { err })
+        })
 
-    const results = {
-      good: dbr.good,
-      bad: dbr.bad,
-      connections: dbr.connections,
-      history: parseInt((dbr.good || 0) - (dbr.bad || 0)),
-      emit: true,
-    }
+      const results = {
+        good: dbr.good,
+        bad: dbr.bad,
+        connections: dbr.connections,
+        history: parseInt((dbr.good || 0) - (dbr.bad || 0)),
+        emit: true,
+      }
 
-    // Careful: don't become self-fulfilling prophecy.
-    if (parseInt(dbr.good) > 5 && parseInt(dbr.bad) === 0) {
-      results.pass = 'all_good'
-    }
-    if (parseInt(dbr.bad) > 5 && parseInt(dbr.good) === 0) {
-      results.fail = 'all_bad'
-    }
+      // Careful: don't become self-fulfilling prophecy.
+      if (parseInt(dbr.good) > 5 && parseInt(dbr.bad) === 0) {
+        results.pass = 'all_good'
+      }
+      if (parseInt(dbr.bad) > 5 && parseInt(dbr.good) === 0) {
+        results.fail = 'all_bad'
+      }
 
-    connection.results.add(plugin, results)
+      connection.results.add(plugin, results)
 
-    plugin.check_awards(connection)
-    next()
-  })
-    .catch(err => {
+      plugin.check_awards(connection)
+      next()
+    })
+    .catch((err) => {
       connection.results.add(plugin, { err })
       next()
     })
 }
 
 exports.hook_mail = function (next, connection, params) {
-
   if (this.should_we_skip(connection)) return next()
 
   this.check_spammy_tld(params[0], connection)
 
   // look for invalid (RFC 5321,(2)821) space in envelope from
   const full_from = connection.current_line
-  if (full_from.toUpperCase().substring(0,11) !== 'MAIL FROM:<') {
+  if (full_from.toUpperCase().substring(0, 11) !== 'MAIL FROM:<') {
     connection.loginfo(this, `RFC ignorant env addr format: ${full_from}`)
-    connection.results.add(this, {fail: 'rfc5321.MailFrom'})
+    connection.results.add(this, { fail: 'rfc5321.MailFrom' })
   }
 
   // apply TLS awards (if defined)
   if (this.cfg.tls !== undefined) {
     if (this.cfg.tls.set && connection.tls.enabled) {
-      connection.results.incr(this, {score: this.cfg.tls.set})
+      connection.results.incr(this, { score: this.cfg.tls.set })
     }
     if (this.cfg.tls.unset && !connection.tls.enabled) {
-      connection.results.incr(this, {score: this.cfg.tls.unset})
+      connection.results.incr(this, { score: this.cfg.tls.unset })
     }
   }
 
@@ -625,7 +632,6 @@ exports.hook_mail = function (next, connection, params) {
 }
 
 exports.hook_rcpt = function (next, connection, params) {
-
   if (this.should_we_skip(connection)) return next()
 
   const rcpt = params[0]
@@ -636,23 +642,22 @@ exports.hook_rcpt = function (next, connection, params) {
   // odds of from_user=rcpt_user in ham: < 1%, in spam > 40%
   // 2015-05 30-day sample: 84% spam correlation
   if (connection?.transaction?.mail_from?.user === rcpt.user) {
-    connection.results.add(this, {fail: 'env_user_match'})
+    connection.results.add(this, { fail: 'env_user_match' })
   }
 
   this.check_syntax_RcptTo(connection)
 
-  connection.results.add(this, {fail: 'rcpt_to'})
+  connection.results.add(this, { fail: 'rcpt_to' })
 
   return this.should_we_deny(next, connection, 'rcpt')
 }
 
 exports.hook_rcpt_ok = function (next, connection, rcpt) {
-
   if (this.should_we_skip(connection)) return next()
 
   const txn = connection.transaction
   if (txn && txn.mail_from && txn.mail_from.user === rcpt.user) {
-    connection.results.add(this, {fail: 'env_user_match'})
+    connection.results.add(this, { fail: 'env_user_match' })
   }
 
   this.check_syntax_RcptTo(connection)
@@ -665,7 +670,7 @@ exports.hook_data_post = function (next, connection) {
 
   if (this.should_we_skip(connection)) return next()
 
-  this.check_awards(connection)  // update awards
+  this.check_awards(connection) // update awards
 
   const results = connection.results.collate(this)
   connection.logdebug(this, `adding header: ${results}`)
@@ -691,13 +696,13 @@ exports.hook_disconnect = function (next, connection) {
 
   const k = connection.results.get('karma')
   if (!k || k.score === undefined) {
-    connection.results.add(this, {err: 'karma results missing'})
+    connection.results.add(this, { err: 'karma results missing' })
     return next()
   }
 
   if (!this.cfg.thresholds) {
     this.check_awards(connection)
-    connection.results.add(this, {msg: 'no action', emit: true })
+    connection.results.add(this, { msg: 'no action', emit: true })
     return next()
   }
 
@@ -708,12 +713,11 @@ exports.hook_disconnect = function (next, connection) {
     this.increment(connection, 'bad', 1)
   }
 
-  connection.results.add(this, {emit: true })
+  connection.results.add(this, { emit: true })
   next()
 }
 
 exports.get_award_loc_from_note = function (connection, award) {
-
   if (connection.transaction) {
     const obj = this.assemble_note_obj(connection.transaction, award)
     if (obj) return obj
@@ -728,7 +732,6 @@ exports.get_award_loc_from_note = function (connection, award) {
 }
 
 exports.get_award_loc_from_results = function (connection, loc_bits) {
-
   let pi_name = loc_bits[1]
   let notekey = loc_bits[2]
 
@@ -755,16 +758,22 @@ exports.get_award_location = function (connection, award_key) {
   const loc_bits = bits[0].split('.')
   if (loc_bits.length === 1) return connection[bits[0]] // ex: relaying
 
-  if (loc_bits[0] === 'notes') {        // ex: notes.spf_mail_helo
+  if (loc_bits[0] === 'notes') {
+    // ex: notes.spf_mail_helo
     return this.get_award_loc_from_note(connection, bits[0])
   }
 
-  if (loc_bits[0] === 'results') {      // ex: results.geoip.distance
+  if (loc_bits[0] === 'results') {
+    // ex: results.geoip.distance
     return this.get_award_loc_from_results(connection, loc_bits)
   }
 
   // ex: transaction.results.spf
-  if (connection.transaction && loc_bits[0] === 'transaction' && loc_bits[1] === 'results') {
+  if (
+    connection.transaction &&
+    loc_bits[0] === 'transaction' &&
+    loc_bits[1] === 'results'
+  ) {
     loc_bits.shift()
     return this.get_award_loc_from_results(connection.transaction, loc_bits)
   }
@@ -775,11 +784,13 @@ exports.get_award_location = function (connection, award_key) {
 exports.get_award_condition = function (note_key, note_val) {
   let wants
   const keybits = note_key.split('@')
-  if (keybits[1]) { wants = keybits[1] }
+  if (keybits[1]) {
+    wants = keybits[1]
+  }
 
   const valbits = note_val.split(/\s+/)
   if (!valbits[1]) return wants
-  if (valbits[1] !== 'if') return wants  // no if condition
+  if (valbits[1] !== 'if') return wants // no if condition
 
   if (valbits[2].match(/^(equals|gt|lt|match)$/)) {
     if (valbits[3]) wants = valbits[3]
@@ -805,14 +816,16 @@ exports.check_awards = function (connection) {
     // test the desired condition
     const bits = award_terms.split(/\s+/)
     const award = parseFloat(bits[0])
-    if (!bits[1] || bits[1] !== 'if') {    // no if conditions
-      if (!note) continue                  // failed truth test
-      if (!wants) {                        // no wants, truth matches
+    if (!bits[1] || bits[1] !== 'if') {
+      // no if conditions
+      if (!note) continue // failed truth test
+      if (!wants) {
+        // no wants, truth matches
         this.apply_award(connection, key, award)
         delete karma.todo[key]
         continue
       }
-      if (note !== wants) continue    // didn't match
+      if (note !== wants) continue // didn't match
     }
 
     // connection.loginfo(this, `check_awards, case matching for: ${wants}`
@@ -839,7 +852,9 @@ exports.check_awards = function (connection) {
         continue
       case 'length': {
         const operator = bits[3]
-        if (bits[4]) { wants = bits[4] }
+        if (bits[4]) {
+          wants = bits[4]
+        }
         switch (operator) {
           case 'gt':
             if (note.length <= parseFloat(wants)) continue
@@ -851,14 +866,19 @@ exports.check_awards = function (connection) {
             if (note.length !== parseFloat(wants)) continue
             break
           default:
-            connection.logerror(this, `length operator "${operator}" not supported.`)
+            connection.logerror(
+              this,
+              `length operator "${operator}" not supported.`,
+            )
             continue
         }
         break
       }
-      case 'in':              // if in pass whitelisted
+      case 'in': // if in pass whitelisted
         // let list = bits[3];
-        if (bits[4]) { wants = bits[4] }
+        if (bits[4]) {
+          wants = bits[4]
+        }
         if (!Array.isArray(note)) continue
         if (!wants) continue
         if (note.indexOf(wants) !== -1) break // found!
@@ -873,25 +893,31 @@ exports.check_awards = function (connection) {
 
 exports.apply_award = function (connection, nl, award) {
   if (!award) return
-  if (isNaN(award)) {    // garbage in config
+  if (isNaN(award)) {
+    // garbage in config
     connection.logerror(this, `non-numeric award from: ${nl}:${award}`)
     return
   }
 
-  const bits = nl.split('@'); nl = bits[0]  // strip off @... if present
+  const bits = nl.split('@')
+  nl = bits[0] // strip off @... if present
 
-  connection.results.incr(this, {score: award})
+  connection.results.incr(this, { score: award })
   connection.logdebug(this, `applied ${nl}:${award}`)
 
-  let trimmed = nl.substring(0, 5) === 'notes' ? nl.substring(6) :
-    nl.substring(0, 7) === 'results' ? nl.substring(8) :
-      nl.substring(0,19) === 'transaction.results' ?
-        nl.substring(20) : nl
+  let trimmed =
+    nl.substring(0, 5) === 'notes'
+      ? nl.substring(6)
+      : nl.substring(0, 7) === 'results'
+        ? nl.substring(8)
+        : nl.substring(0, 19) === 'transaction.results'
+          ? nl.substring(20)
+          : nl
 
-  if (trimmed.substring(0,7) === 'rcpt_to') trimmed = trimmed.substring(8)
-  if (trimmed.substring(0,7) === 'mail_from') trimmed = trimmed.substring(10)
-  if (trimmed.substring(0,7) === 'connect') trimmed = trimmed.substring(8)
-  if (trimmed.substring(0,4) === 'data') trimmed = trimmed.substring(5)
+  if (trimmed.substring(0, 7) === 'rcpt_to') trimmed = trimmed.substring(8)
+  if (trimmed.substring(0, 7) === 'mail_from') trimmed = trimmed.substring(10)
+  if (trimmed.substring(0, 7) === 'connect') trimmed = trimmed.substring(8)
+  if (trimmed.substring(0, 4) === 'data') trimmed = trimmed.substring(5)
 
   if (award > 0) connection.results.add(this, { pass: trimmed })
   if (award < 0) connection.results.add(this, { fail: trimmed })
@@ -899,7 +925,7 @@ exports.apply_award = function (connection, nl, award) {
 
 exports.check_spammy_tld = function (mail_from, connection) {
   if (!this.cfg.spammy_tlds) return
-  if (mail_from.isNull()) return         // null sender (bounce)
+  if (mail_from.isNull()) return // null sender (bounce)
 
   const from_tld = mail_from.host.split('.').pop()
   // connection.logdebug(this, `from_tld: ${from_tld}`);
@@ -907,17 +933,17 @@ exports.check_spammy_tld = function (mail_from, connection) {
   const tld_penalty = parseFloat(this.cfg.spammy_tlds[from_tld] || 0)
   if (tld_penalty === 0) return
 
-  connection.results.incr(this, {score: tld_penalty})
-  connection.results.add(this, {fail: 'spammy.TLD'})
+  connection.results.incr(this, { score: tld_penalty })
+  connection.results.add(this, { fail: 'spammy.TLD' })
 }
 
 exports.check_syntax_RcptTo = function (connection) {
   // look for an illegal (RFC 5321,(2)821) space in envelope recipient
   const full_rcpt = connection.current_line
-  if (full_rcpt.toUpperCase().substring(0,9) === 'RCPT TO:<') return
+  if (full_rcpt.toUpperCase().substring(0, 9) === 'RCPT TO:<') return
 
   connection.loginfo(this, `illegal envelope address format: ${full_rcpt}`)
-  connection.results.add(this, {fail: 'rfc5321.RcptTo'})
+  connection.results.add(this, { fail: 'rfc5321.RcptTo' })
 }
 
 exports.assemble_note_obj = function (prefix, key) {
@@ -941,50 +967,52 @@ exports.check_asn = function (connection, asnkey) {
 
   if (this.cfg.asn.report_as) report_as.name = this.cfg.asn.report_as
 
-  this.db.hGetAll(asnkey).then(res => {
-    if (res === null) {
-      const expire = (this.cfg.redis.expire_days || 60) * 86400 // days
-      this.init_asn(asnkey, expire)
-      return
-    }
-
-    this.db.hIncrBy(asnkey, 'connections', 1)
-    const asn_score = parseInt(res.good || 0) - (res.bad || 0)
-    const asn_results = {
-      asn_score,
-      asn_connections: res.connections,
-      asn_good: res.good,
-      asn_bad: res.bad,
-      emit: true,
-    }
-
-    if (asn_score) {
-      if (asn_score < -5) {
-        asn_results.fail = 'asn:history'
+  this.db
+    .hGetAll(asnkey)
+    .then((res) => {
+      if (res === null) {
+        const expire = (this.cfg.redis.expire_days || 60) * 86400 // days
+        this.init_asn(asnkey, expire)
+        return
       }
-      else if (asn_score > 5) {
-        asn_results.pass = 'asn:history'
+
+      this.db.hIncrBy(asnkey, 'connections', 1)
+      const asn_score = parseInt(res.good || 0) - (res.bad || 0)
+      const asn_results = {
+        asn_score,
+        asn_connections: res.connections,
+        asn_good: res.good,
+        asn_bad: res.bad,
+        emit: true,
       }
-    }
 
-    if (parseInt(res.bad) > 5 && parseInt(res.good) === 0) {
-      asn_results.fail = 'asn:all_bad'
-    }
-    if (parseInt(res.good) > 5 && parseInt(res.bad) === 0) {
-      asn_results.pass = 'asn:all_good'
-    }
+      if (asn_score) {
+        if (asn_score < -5) {
+          asn_results.fail = 'asn:history'
+        } else if (asn_score > 5) {
+          asn_results.pass = 'asn:history'
+        }
+      }
 
-    connection.results.add(report_as, asn_results)
-  })
-    .catch(err => {
+      if (parseInt(res.bad) > 5 && parseInt(res.good) === 0) {
+        asn_results.fail = 'asn:all_bad'
+      }
+      if (parseInt(res.good) > 5 && parseInt(res.bad) === 0) {
+        asn_results.pass = 'asn:all_good'
+      }
+
+      connection.results.add(report_as, asn_results)
+    })
+    .catch((err) => {
       connection.results.add(this, { err })
     })
 }
 
 exports.init_ip = async function (dbkey, rip, expire) {
   if (!this.db) return
-  await this.db.multi()
-    .hmSet(dbkey, {'bad': 0, 'good': 0, 'connections': 1})
+  await this.db
+    .multi()
+    .hmSet(dbkey, { bad: 0, good: 0, connections: 1 })
     .expire(dbkey, expire)
     .exec()
 }
@@ -999,8 +1027,9 @@ exports.get_asn_key = function (connection) {
 
 exports.init_asn = function (asnkey, expire) {
   if (!this.db) return
-  this.db.multi()
-    .hmSet(asnkey, {'bad': 0, 'good': 0, 'connections': 1})
-    .expire(asnkey, expire * 2)    // keep ASN longer
+  this.db
+    .multi()
+    .hmSet(asnkey, { bad: 0, good: 0, connections: 1 })
+    .expire(asnkey, expire * 2) // keep ASN longer
     .exec()
 }

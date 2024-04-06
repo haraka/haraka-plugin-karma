@@ -1,19 +1,18 @@
 'use strict'
 
-const assert       = require('assert')
+const assert = require('assert')
 
-const Address      = require('address-rfc2821').Address
-const fixtures     = require('haraka-test-fixtures')
-const constants    = require('haraka-constants')
+const Address = require('address-rfc2821').Address
+const fixtures = require('haraka-test-fixtures')
+const constants = require('haraka-constants')
 
-const stub         = fixtures.stub.stub
+const stub = fixtures.stub.stub
 
-function _set_up (done) {
-
+function _set_up(done) {
   this.plugin = new fixtures.plugin('karma')
 
   this.plugin.cfg = { main: {} }
-  this.plugin.deny_hooks = {'connect': true}
+  this.plugin.deny_hooks = { connect: true }
   this.plugin.tarpit_hooks = ['connect']
 
   this.connection = fixtures.connection.createConnection({}, { notes: {} })
@@ -21,7 +20,6 @@ function _set_up (done) {
 
   done()
 }
-
 
 describe('karma_init', function () {
   beforeEach(function (done) {
@@ -84,15 +82,21 @@ describe('assemble_note_obj', function () {
   beforeEach(_set_up)
 
   it('no auth fails', function (done) {
-    const obj = this.plugin.assemble_note_obj(this.connection, 'notes.auth_fails')
+    const obj = this.plugin.assemble_note_obj(
+      this.connection,
+      'notes.auth_fails',
+    )
     assert.equal(undefined, obj)
     done()
   })
 
   it('has auth fails', function (done) {
-    this.connection.notes.auth_fails=[1,2]
-    const obj = this.plugin.assemble_note_obj(this.connection, 'notes.auth_fails')
-    assert.deepEqual([1,2], obj)
+    this.connection.notes.auth_fails = [1, 2]
+    const obj = this.plugin.assemble_note_obj(
+      this.connection,
+      'notes.auth_fails',
+    )
+    assert.deepEqual([1, 2], obj)
     done()
   })
 })
@@ -105,7 +109,7 @@ describe('hook_deny', function () {
       assert.equal(constants.OK, rc, rc)
       done()
     }
-    this.plugin.hook_deny(next, this.connection, ['','','',''])
+    this.plugin.hook_deny(next, this.connection, ['', '', '', ''])
   })
 
   it('pi_name=karma', function (done) {
@@ -113,7 +117,7 @@ describe('hook_deny', function () {
       assert.equal(undefined, rc)
       done()
     }
-    this.plugin.hook_deny(next, this.connection, ['','','karma',''])
+    this.plugin.hook_deny(next, this.connection, ['', '', 'karma', ''])
   })
 
   it('pi_name=access', function (done) {
@@ -122,7 +126,7 @@ describe('hook_deny', function () {
       done()
     }
     this.plugin.deny_exclude_plugins = { access: true }
-    this.plugin.hook_deny(next, this.connection, ['','','access',''])
+    this.plugin.hook_deny(next, this.connection, ['', '', 'access', ''])
   })
 
   it('pi_hook=rcpt_to', function (done) {
@@ -131,8 +135,14 @@ describe('hook_deny', function () {
       done()
     }
     this.plugin.deny_exclude_hooks = { rcpt_to: true }
-    this.plugin.hook_deny(next, this.connection,
-      ['','','','','','rcpt_to'])
+    this.plugin.hook_deny(next, this.connection, [
+      '',
+      '',
+      '',
+      '',
+      '',
+      'rcpt_to',
+    ])
   })
 
   it('pi_hook=queue', function (done) {
@@ -141,7 +151,7 @@ describe('hook_deny', function () {
       done()
     }
     this.plugin.deny_exclude_hooks = { queue: true }
-    this.plugin.hook_deny(next, this.connection, ['','','','','','queue'])
+    this.plugin.hook_deny(next, this.connection, ['', '', '', '', '', 'queue'])
   })
 
   it('denysoft', function (done) {
@@ -149,7 +159,14 @@ describe('hook_deny', function () {
       assert.equal(constants.OK, rc)
       done()
     }
-    this.plugin.hook_deny(next, this.connection, [constants.DENYSOFT,'','','','',''])
+    this.plugin.hook_deny(next, this.connection, [
+      constants.DENYSOFT,
+      '',
+      '',
+      '',
+      '',
+      '',
+    ])
   })
 })
 
@@ -157,14 +174,14 @@ describe('get_award_location', function () {
   beforeEach(_set_up)
 
   it('relaying=false', function (done) {
-    this.connection.relaying=false
+    this.connection.relaying = false
     const r = this.plugin.get_award_location(this.connection, 'relaying')
     assert.equal(false, r)
     done()
   })
 
   it('relaying=true', function (done) {
-    this.connection.relaying=true
+    this.connection.relaying = true
     const r = this.plugin.get_award_location(this.connection, 'relaying')
     assert.equal(true, r)
     done()
@@ -211,7 +228,10 @@ describe('get_award_location', function () {
   it('txn.results.karma', function (done) {
     // these results shouldn't be found, b/c txn specified
     this.connection.results.add('karma', { score: -1 })
-    const r = this.plugin.get_award_location(this.connection, 'transaction.results.karma')
+    const r = this.plugin.get_award_location(
+      this.connection,
+      'transaction.results.karma',
+    )
     // console.log(r);
     assert.equal(undefined, r)
     done()
@@ -219,7 +239,10 @@ describe('get_award_location', function () {
 
   it('results.auth/auth_base', function (done) {
     this.connection.results.add('auth/auth_base', { fail: 'PLAIN' })
-    const r = this.plugin.get_award_location(this.connection, 'results.auth/auth_base')
+    const r = this.plugin.get_award_location(
+      this.connection,
+      'results.auth/auth_base',
+    )
     assert.equal('PLAIN', r.fail[0])
     done()
   })
@@ -228,19 +251,31 @@ describe('get_award_location', function () {
 describe('get_award_condition', function () {
   beforeEach(_set_up)
   it('geoip.distance', function (done) {
-    assert.equal(4000, this.plugin.get_award_condition(
-      'results.geoip.distance@4000', '-1 if gt'
-    ))
-    assert.equal(4000, this.plugin.get_award_condition(
-      'results.geoip.distance@uniq', '-1 if gt 4000'
-    ))
+    assert.equal(
+      4000,
+      this.plugin.get_award_condition(
+        'results.geoip.distance@4000',
+        '-1 if gt',
+      ),
+    )
+    assert.equal(
+      4000,
+      this.plugin.get_award_condition(
+        'results.geoip.distance@uniq',
+        '-1 if gt 4000',
+      ),
+    )
     done()
   })
 
   it('auth/auth_base', function (done) {
-    assert.equal('plain', this.plugin.get_award_condition(
-      'results.auth/auth_base.fail@plain', '-1 if in'
-    ))
+    assert.equal(
+      'plain',
+      this.plugin.get_award_condition(
+        'results.auth/auth_base.fail@plain',
+        '-1 if in',
+      ),
+    )
     done()
   })
 })
@@ -255,17 +290,16 @@ describe('check_awards', function () {
   })
 
   it('no todo', function (done) {
-    this.connection.results.add('karma', { todo: { } })
+    this.connection.results.add('karma', { todo: {} })
     const r = this.plugin.check_awards(this.connection)
     assert.equal(undefined, r)
     done()
   })
 
   it('geoip gt', function (done) {
-
     // populate the karma result with a todo item
     this.connection.results.add('karma', {
-      todo: { 'results.geoip.distance@4000': '-1 if gt 4000' }
+      todo: { 'results.geoip.distance@4000': '-1 if gt 4000' },
     })
     // test a non-matching criteria
     this.connection.results.add('geoip', { distance: 4000 })
@@ -285,21 +319,23 @@ describe('check_awards', function () {
 
   it('auth failure', function (done) {
     this.connection.results.add('karma', {
-      todo: { 'results.auth/auth_base.fail@PLAIN': '-1 if in' }
+      todo: { 'results.auth/auth_base.fail@PLAIN': '-1 if in' },
     })
-    this.connection.results.add('auth/auth_base',
-      {fail: 'PLAIN'})
+    this.connection.results.add('auth/auth_base', { fail: 'PLAIN' })
     const r = this.plugin.check_awards(this.connection)
     assert.equal(undefined, r)
-    assert.equal('auth/auth_base.fail', this.connection.results.get('karma').fail[0])
+    assert.equal(
+      'auth/auth_base.fail',
+      this.connection.results.get('karma').fail[0],
+    )
     done()
   })
 
   it('valid recipient', function (done) {
     this.connection.results.add('karma', {
-      todo: { 'results.rcpt_to.qmd.pass@exist': '1 if in' }
+      todo: { 'results.rcpt_to.qmd.pass@exist': '1 if in' },
     })
-    this.connection.results.add('rcpt_to.qmd', {pass: 'exist'})
+    this.connection.results.add('rcpt_to.qmd', { pass: 'exist' })
     const r = this.plugin.check_awards(this.connection)
     assert.equal(undefined, r)
     assert.equal('qmd.pass', this.connection.results.get('karma').pass[0])
@@ -427,7 +463,7 @@ describe('should_we_deny', function () {
       done()
     }.bind(this)
     this.plugin.cfg.tarpit = { max: 1, delay: 0 }
-    this.plugin.deny_hooks = { connect: true}
+    this.plugin.deny_hooks = { connect: true }
     this.connection.results.add(this.plugin, { score: -6 })
     this.plugin.should_we_deny(next, this.connection, 'connect')
   })
@@ -450,9 +486,12 @@ describe('check_result_equal', function () {
 
   it('equal match is scored', function (done) {
     const award = {
-      id         : 1,           award      : 2,
-      operator   : 'equals',    value      : 'clean',
-      reason     : 'testing',   resolution : 'never',
+      id: 1,
+      award: 2,
+      operator: 'equals',
+      value: 'clean',
+      reason: 'testing',
+      resolution: 'never',
     }
     this.plugin.check_result_equal(['clean'], award, this.connection)
     assert.equal(this.connection.results.store.karma.score, 2)
@@ -462,9 +501,12 @@ describe('check_result_equal', function () {
 
   it('not equal match is not scored', function (done) {
     const award = {
-      id         : 1,           award      : 2,
-      operator   : 'equals',    value      : 'dirty',
-      reason     : 'testing',   resolution : 'never',
+      id: 1,
+      award: 2,
+      operator: 'equals',
+      value: 'dirty',
+      reason: 'testing',
+      resolution: 'never',
     }
     this.plugin.check_result_equal(['clean'], award, this.connection)
     assert.equal(this.connection.results.store.karma, undefined)
@@ -477,9 +519,12 @@ describe('check_result_gt', function () {
 
   it('gt match is scored', function (done) {
     const award = {
-      id         : 5,           award      : 3,
-      operator   : 'gt',        value      : 3,
-      reason     : 'testing',   resolution : 'never',
+      id: 5,
+      award: 3,
+      operator: 'gt',
+      value: 3,
+      reason: 'testing',
+      resolution: 'never',
     }
     this.plugin.check_result_gt([4], award, this.connection)
     // console.log(this.connection.results.store);
@@ -494,9 +539,12 @@ describe('check_result_lt', function () {
 
   it('lt match is scored', function (done) {
     const award = {
-      id         : 2,           award      : 3,
-      operator   : 'lt',        value      : 5,
-      reason     : 'testing',   resolution : 'never',
+      id: 2,
+      award: 3,
+      operator: 'lt',
+      value: 5,
+      reason: 'testing',
+      resolution: 'never',
     }
     this.plugin.check_result_lt([4], award, this.connection)
     // console.log(this.connection.results.store);
@@ -507,9 +555,12 @@ describe('check_result_lt', function () {
 
   it('lt match not scored', function (done) {
     const award = {
-      id         : 3,           award      : 3,
-      operator   : 'lt',        value      : 3,
-      reason     : 'testing',   resolution : 'never',
+      id: 3,
+      award: 3,
+      operator: 'lt',
+      value: 3,
+      reason: 'testing',
+      resolution: 'never',
     }
     this.plugin.check_result_lt([4], award, this.connection)
     // console.log(this.connection.results.store);
@@ -523,9 +574,12 @@ describe('check_result_match', function () {
 
   it('match pattern is scored', function (done) {
     const award = {
-      id         : 1,           award      : 2,
-      operator   : 'match',     value      : 'phish',
-      reason     : 'testing',   resolution : 'never',
+      id: 1,
+      award: 2,
+      operator: 'match',
+      value: 'phish',
+      reason: 'testing',
+      resolution: 'never',
     }
     this.plugin.check_result_match(['isphishing'], award, this.connection)
     // console.log(this.connection.results.store);
@@ -536,9 +590,12 @@ describe('check_result_match', function () {
 
   it('mismatch is not scored', function (done) {
     const award = {
-      id         : 1,           award      : 2,
-      operator   : 'match',     value      : 'dirty',
-      reason     : 'testing',   resolution : 'never',
+      id: 1,
+      award: 2,
+      operator: 'match',
+      value: 'dirty',
+      reason: 'testing',
+      resolution: 'never',
     }
     this.plugin.check_result_match(['clean'], award, this.connection)
     // console.log(this.connection.results.store);
@@ -548,11 +605,18 @@ describe('check_result_match', function () {
 
   it('FCrDNS match is scored', function (done) {
     const award = {
-      id         : 89,         award      : 2,
-      operator   : 'match',     value      : 'google.com',
-      reason     : 'testing',   resolution : 'never',
+      id: 89,
+      award: 2,
+      operator: 'match',
+      value: 'google.com',
+      reason: 'testing',
+      resolution: 'never',
     }
-    this.plugin.check_result_match(['mail-yk0-f182.google.com'], award, this.connection)
+    this.plugin.check_result_match(
+      ['mail-yk0-f182.google.com'],
+      award,
+      this.connection,
+    )
     // console.log(this.connection.results.store);
     assert.equal(this.connection.results.store.karma.score, 2)
     assert.equal(this.connection.results.store.karma.awards[0], 89)
@@ -564,9 +628,12 @@ describe('check_result_length', function () {
   beforeEach(_set_up)
   it('eq pattern is scored', function (done) {
     const award = {
-      id         : 1,           award      : 2,
-      operator   : 'length',    value      : 'eq 3',
-      reason     : 'testing',   resolution : 'hah',
+      id: 1,
+      award: 2,
+      operator: 'length',
+      value: 'eq 3',
+      reason: 'testing',
+      resolution: 'hah',
     }
     this.plugin.check_result_length(['3'], award, this.connection)
     // console.log(this.connection.results.store);
@@ -577,9 +644,12 @@ describe('check_result_length', function () {
 
   it('eq pattern is not scored', function (done) {
     const award = {
-      id         : 1,           award      : 2,
-      operator   : 'length',    value      : 'eq 3',
-      reason     : 'testing',   resolution : 'hah',
+      id: 1,
+      award: 2,
+      operator: 'length',
+      value: 'eq 3',
+      reason: 'testing',
+      resolution: 'hah',
     }
     this.plugin.check_result_length(['4'], award, this.connection)
     // console.log(this.connection.results.store.karma);
@@ -589,9 +659,12 @@ describe('check_result_length', function () {
 
   it('gt pattern is scored', function (done) {
     const award = {
-      id         : 1,           award      : 2,
-      operator   : 'length',    value      : 'gt 3',
-      reason     : 'testing',   resolution : 'hah',
+      id: 1,
+      award: 2,
+      operator: 'length',
+      value: 'gt 3',
+      reason: 'testing',
+      resolution: 'hah',
     }
     this.plugin.check_result_length(['5'], award, this.connection)
     // console.log(this.connection.results.store);
@@ -602,9 +675,12 @@ describe('check_result_length', function () {
 
   it('gt pattern is not scored', function (done) {
     const award = {
-      id         : 1,           award      : 2,
-      operator   : 'length',    value      : 'gt 3',
-      reason     : 'testing',   resolution : 'hah',
+      id: 1,
+      award: 2,
+      operator: 'length',
+      value: 'gt 3',
+      reason: 'testing',
+      resolution: 'hah',
     }
     this.plugin.check_result_length(['3'], award, this.connection)
     // console.log(this.connection.results.store.karma);
@@ -614,9 +690,12 @@ describe('check_result_length', function () {
 
   it('lt pattern is scored', function (done) {
     const award = {
-      id         : 1,           award      : 2,
-      operator   : 'length',    value      : 'lt 3',
-      reason     : 'testing',   resolution : 'hah',
+      id: 1,
+      award: 2,
+      operator: 'length',
+      value: 'lt 3',
+      reason: 'testing',
+      resolution: 'hah',
     }
     this.plugin.check_result_length(['2'], award, this.connection)
     // console.log(this.connection.results.store);
@@ -627,9 +706,12 @@ describe('check_result_length', function () {
 
   it('lt pattern is not scored', function (done) {
     const award = {
-      id         : 1,           award      : 2,
-      operator   : 'length',    value      : 'lt 3',
-      reason     : 'testing',   resolution : 'hah',
+      id: 1,
+      award: 2,
+      operator: 'length',
+      value: 'lt 3',
+      reason: 'testing',
+      resolution: 'hah',
     }
     this.plugin.check_result_length(['3'], award, this.connection)
     // console.log(this.connection.results.store.karma);
@@ -643,9 +725,12 @@ describe('check_result_exists', function () {
 
   it('exists pattern is scored', function (done) {
     const award = {
-      id         : 1,           award      : 2,
-      operator   : 'exists',    value      : 'any',
-      reason     : 'testing',   resolution : 'high five',
+      id: 1,
+      award: 2,
+      operator: 'exists',
+      value: 'any',
+      reason: 'testing',
+      resolution: 'high five',
     }
     this.plugin.check_result_exists(['3'], award, this.connection)
     // console.log(this.connection.results.store);
@@ -656,9 +741,12 @@ describe('check_result_exists', function () {
 
   it('not exists pattern is not scored', function (done) {
     const award = {
-      id         : 1,           award      : 3,
-      operator   : 'exists',    value      : '',
-      reason     : 'testing',   resolution : 'misses',
+      id: 1,
+      award: 3,
+      operator: 'exists',
+      value: '',
+      reason: 'testing',
+      resolution: 'misses',
     }
     this.plugin.check_result_exists([], award, this.connection)
     // console.log(this.connection.results.store);
@@ -676,9 +764,11 @@ describe('check_result', function () {
       1: 'geoip | country | equals | CN | 2',
     }
     this.plugin.preparse_result_awards()
-    this.connection.results.add({name: 'geoip'}, {country: 'CN'})
-    this.plugin.check_result(this.connection,
-      '{"plugin":"geoip","result":{"country":"CN"}}')
+    this.connection.results.add({ name: 'geoip' }, { country: 'CN' })
+    this.plugin.check_result(
+      this.connection,
+      '{"plugin":"geoip","result":{"country":"CN"}}',
+    )
     // console.log(this.connection.results.store);
     assert.equal(this.connection.results.store.karma.score, 2)
     assert.equal(this.connection.results.store.karma.awards[0], 1)
@@ -690,9 +780,11 @@ describe('check_result', function () {
       2: 'dnsbl | fail | equals | dnsbl.sorbs.net | -5',
     }
     this.plugin.preparse_result_awards()
-    this.connection.results.add({name: 'dnsbl'}, {fail: 'dnsbl.sorbs.net'})
-    this.plugin.check_result(this.connection,
-      '{"plugin":"dnsbl","result":{"fail":"dnsbl.sorbs.net"}}')
+    this.connection.results.add({ name: 'dnsbl' }, { fail: 'dnsbl.sorbs.net' })
+    this.plugin.check_result(
+      this.connection,
+      '{"plugin":"dnsbl","result":{"fail":"dnsbl.sorbs.net"}}',
+    )
     // console.log(this.connection.results.store);
     assert.equal(this.connection.results.store.karma.score, -5)
     assert.equal(this.connection.results.store.karma.awards[0], 2)
@@ -728,37 +820,49 @@ describe('tls', function () {
   beforeEach(_set_up)
 
   it('unconfigured TLS does nothing', function (done) {
-    this.connection.tls.enabled=true
+    this.connection.tls.enabled = true
     const mfrom = new Address('spamy@er7diogt.rrnsale.top')
-    this.connection.current_line="MAIL FROM:<foo@test.com>"
-    this.plugin.hook_mail(() => {
-      assert.equal(this.connection.results.store.karma, undefined)
-      done()
-    }, this.connection, [mfrom])
+    this.connection.current_line = 'MAIL FROM:<foo@test.com>'
+    this.plugin.hook_mail(
+      () => {
+        assert.equal(this.connection.results.store.karma, undefined)
+        done()
+      },
+      this.connection,
+      [mfrom],
+    )
   })
 
   it('TLS is scored', function (done) {
     this.plugin.cfg.tls = { set: 2, unset: -4 }
-    this.connection.tls.enabled=true
+    this.connection.tls.enabled = true
     const mfrom = new Address('spamy@er7diogt.rrnsale.top')
-    this.connection.current_line="MAIL FROM:<foo@test.com>"
-    this.plugin.hook_mail(() => {
-      // console.log(this.connection.results.store);
-      assert.equal(this.connection.results.store.karma.score, 2)
-      done()
-    }, this.connection, [mfrom])
+    this.connection.current_line = 'MAIL FROM:<foo@test.com>'
+    this.plugin.hook_mail(
+      () => {
+        // console.log(this.connection.results.store);
+        assert.equal(this.connection.results.store.karma.score, 2)
+        done()
+      },
+      this.connection,
+      [mfrom],
+    )
   })
 
   it('no TLS is scored', function (done) {
     this.plugin.cfg.tls = { set: 2, unset: -4 }
-    this.connection.tls.enabled=false
+    this.connection.tls.enabled = false
     const mfrom = new Address('spamy@er7diogt.rrnsale.top')
-    this.connection.current_line="MAIL FROM:<foo@test.com>"
-    this.plugin.hook_mail(() => {
-      // console.log(this.connection.results.store);
-      assert.equal(this.connection.results.store.karma.score, -4)
-      done()
-    }, this.connection, [mfrom])
+    this.connection.current_line = 'MAIL FROM:<foo@test.com>'
+    this.plugin.hook_mail(
+      () => {
+        // console.log(this.connection.results.store);
+        assert.equal(this.connection.results.store.karma.score, -4)
+        done()
+      },
+      this.connection,
+      [mfrom],
+    )
   })
 })
 
@@ -766,10 +870,10 @@ describe('skipping hooks', function () {
   beforeEach(_set_up)
 
   it('notes.disable_karma', function (done) {
-    function next (rc) {
+    function next(rc) {
       assert.equal(undefined, rc)
     }
-    function last (rc) {
+    function last(rc) {
       assert.equal(undefined, rc)
       done()
     }
@@ -787,10 +891,10 @@ describe('skipping hooks', function () {
   })
 
   it('private skip', function (done) {
-    function next (rc) {
+    function next(rc) {
       assert.equal(undefined, rc)
     }
-    function last (rc) {
+    function last(rc) {
       assert.equal(undefined, rc)
       done()
     }
