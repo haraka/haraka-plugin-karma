@@ -6,7 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### [2.1.4] - 2024-04-06
 
--
+- eslint: reduce config to depending on @haraka
+- package.json: added scripts
+- doc(CHANGELOG): ordered urls
+- doc(Changes) -> CHANGELOG
+- prettier & eslint configs
+- chore: populate package.json [files]
 
 ### [2.1.3] - 2023-12-12
 
