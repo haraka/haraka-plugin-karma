@@ -18,7 +18,6 @@ One challenge for mail filtering is that filters (or plugins, in Haraka's case) 
 
 In order to score a plugins results, plugins must save their results to the [Result Store][results-url]. Karma will see that and apply the awards specified in `karma.ini`.
 
-
 ## How Karma Works
 
 Karma takes a holistic view of **connections**. During the connection, karma collects these results and applies the [result_awards](#awards) defined in `karma.ini`. Once a connection/message exceeds the threshold.negative score (default: -8), karma rejects it at the next [deny]hook.
@@ -32,13 +31,11 @@ The scoring mechanism is not dissimilar to [SpamAssassin][sa-url], but Karma has
     * Access to raw SMTP commands (data + formatting inspection)
     * Can reject connections before DATA (save lots of bandwidth)
 
-Karma is not a replacement for content filters. Karma focuses on the quality of the **connection**. Content filters (bayes\*) focus on the content of the **message**. Karma works best *with* content filters.
-
+Karma is not a replacement for content filters. Karma focuses on the quality of the **connection**. Content filters (bayes\*) focus on the content of the **message**. Karma works best _with_ content filters.
 
 # CONFIG
 
 See config/karma.ini for options and inline documentation.
-
 
 ## <a name="awards"></a>AWARDS
 
@@ -50,7 +47,6 @@ Karma begins scoring the connection when the first packet arrives. The IP reputa
 
 Karma performs checks early and often, maximizing the penality it can exact upon bad mailers.
 
-
 ## <a name="penalties"></a>Penalties
 
 ### Deny / Reject
@@ -61,7 +57,7 @@ When connections become worse than [thresholds]negative, they are denied during 
 
 Karma history is computed as the number of good - bad connections.
 
-When each connection ends, *karma* records the result. When a sufficient history has been built for an IP or ASN, future connections from that address(es) will get a positive or negative karma award.
+When each connection ends, _karma_ records the result. When a sufficient history has been built for an IP or ASN, future connections from that address(es) will get a positive or negative karma award.
 
 The reward is purposefully small, to permit good senders in bad neighborhoods to still send.
 
@@ -98,21 +94,20 @@ When using `karma`, do not use Haraka's `tarpit` plugin.
 
 Connection data that karma considers:
 
-* [IP Reputation](#IP_Reputation)
-* [ASN reputation](#Neighbor_Reputation)
-* DENY events by other plugins
-* envelope sender from a spammy TLD
-* [malformed envelope addresses](#malformed_env)
-* [unrecognized SMTP commands](#unrecognized)
-* matching *env from* and *env to* name (rare in ham, frequent in spam)
+- [IP Reputation](#IP_Reputation)
+- [ASN reputation](#Neighbor_Reputation)
+- DENY events by other plugins
+- envelope sender from a spammy TLD
+- [malformed envelope addresses](#malformed_env)
+- [unrecognized SMTP commands](#unrecognized)
+- matching _env from_ and _env to_ name (rare in ham, frequent in spam)
 
 The data from these tests are helpful but the real power of karma is [scoring
 the results](#awards) of other plugins. See karma.ini for a rich set of examples.
 
-
 ### <a name="IP_Reputation"></a>IP Reputation
 
-Karma records the number of good, bad, and total connections.  The results
+Karma records the number of good, bad, and total connections. The results
 are accessible to other plugins as well.
 
     var karma = connection.results.get('karma');
@@ -142,14 +137,14 @@ connections from each ASN.
 
 ASNs with less than 5 karma points in either direction are ignored.
 
-#### report\_as
+#### report_as
 
 Store the ASN results as another plugin. Example: I set `report_as=asn`, so that karma history for an ASN is reported with the ASN plugin data. A practical consequence of changing report_as is that the award location in karma.ini would need to change from:
 
     NNN karma | pass | equals | asn_all_good |  2
     NNN karma | fail | equals | asn_all_bad  | -3
 
-to: 
+to:
 
     NNN asn | pass | equals | asn_all_good |  2
     NNN asn | fail | equals | asn_all_bad  | -3
@@ -157,7 +152,6 @@ to:
 ### <a name="malformed_env"></a>Malformed Envelope Addresses
 
 Very old versions of Outlook Express and some malware senders don't bother complying with the RFC (5321, 2821, 821) address format. Karma checks the envelope from and to addresses for a common RFC ignorant pattern that is highly correlated with malware.
-
 
 ### <a name="unrecognized"></a>Unrecognized SMTP verbs/commands
 
@@ -190,9 +184,7 @@ Karma plugin is disabled for all private IP addresses according to RFC1918. Opti
 
 Karma is most effective at filtering mail delivered by bots and rogue servers.
 Spam delivered by servers with good reputations normally pass karma's checks.
-Expect to use karma *with* content filters.
-
-
+Expect to use karma _with_ content filters.
 
 [p0f-url]: /manual/plugins/connect.p0f.html
 [geoip-url]: https://github.com/haraka/haraka-plugin-geoip
