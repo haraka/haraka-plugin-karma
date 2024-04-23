@@ -194,8 +194,6 @@ Expect to use karma _with_ content filters.
 [sa-url]: http://haraka.github.io/manual/plugins/spamassassin.html
 [snf-url]: http://haraka.github.io/manual/plugins/messagesniffer.html
 [results-url]: http://haraka.github.io/manual/Results.html
-
-
 [ci-img]: https://github.com/haraka/haraka-plugin-karma/actions/workflows/ci.yml/badge.svg
 [ci-url]: https://github.com/haraka/haraka-plugin-karma/actions/workflows/ci.yml
 [cov-img]: https://codecov.io/github/haraka/haraka-plugin-karma/coverage.svg
