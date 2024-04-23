@@ -16,7 +16,7 @@ function _set_up(done) {
   this.plugin.tarpit_hooks = ['connect']
 
   this.connection = fixtures.connection.createConnection({}, { notes: {} })
-  this.connection.transaction = fixtures.transaction.createTransaction()
+  this.connection.init_transaction()
 
   done()
 }

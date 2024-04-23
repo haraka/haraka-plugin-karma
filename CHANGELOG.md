@@ -4,6 +4,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Unreleased
 
+### [2.1.5] - 2024-04-23
+
+- doc(README): remove spurious markdown link
+- doc(CONTRIBUTORS): added
+
 ### [2.1.4] - 2024-04-06
 
 - eslint: reduce config to depending on @haraka
@@ -124,3 +129,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 [2.1.2]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.1.2
 [2.1.3]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.1.3
 [2.1.4]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.1.4
+[2.1.5]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.1.5
