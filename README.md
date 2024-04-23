@@ -195,7 +195,6 @@ Expect to use karma _with_ content filters.
 [snf-url]: http://haraka.github.io/manual/plugins/messagesniffer.html
 [results-url]: http://haraka.github.io/manual/Results.html
 
-[![CI]()]()
 
 [ci-img]: https://github.com/haraka/haraka-plugin-karma/actions/workflows/ci.yml/badge.svg
 [ci-url]: https://github.com/haraka/haraka-plugin-karma/actions/workflows/ci.yml
