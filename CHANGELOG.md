@@ -4,6 +4,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Unreleased
 
+### [2.1.6] - 2024-11-08
+
+- fix missing error handler on redis client [#45](https://github.com/haraka/haraka-plugin-redis/issues/45)
+
 ### [2.1.5] - 2024-04-23
 
 - doc(README): remove spurious markdown link

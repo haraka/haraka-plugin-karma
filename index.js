@@ -124,6 +124,9 @@ exports.results_init = async function (next, connection) {
   }
 
   connection.notes.redis = redis.createClient(this.redisCfg.pubsub)
+  connection.notes.redis.on('error', (err) => {
+    connection.logerror(this, err.message)
+  })
   await connection.notes.redis.connect()
 
   const pattern = this.get_redis_sub_channel(connection)
