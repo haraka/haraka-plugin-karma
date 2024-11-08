@@ -1,6 +1,6 @@
 {
   "name": "haraka-plugin-karma",
-  "version": "2.1.5",
+  "version": "2.1.6",
   "description": "A heuristics scoring and reputation engine for SMTP connections",
   "main": "index.js",
   "files": [
