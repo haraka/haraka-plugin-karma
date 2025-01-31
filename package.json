@@ -1,6 +1,6 @@
 {
   "name": "haraka-plugin-karma",
-  "version": "2.1.6",
+  "version": "2.1.7",
   "description": "A heuristics scoring and reputation engine for SMTP connections",
   "main": "index.js",
   "files": [
@@ -9,8 +9,8 @@
   ],
   "scripts": {
     "format": "npm run prettier:fix && npm run lint:fix",
-    "lint": "npx eslint@^8 *.js test",
-    "lint:fix": "npx eslint@^8 *.js test --fix",
+    "lint": "npx eslint@^9 *.js test",
+    "lint:fix": "npx eslint@^9 *.js test --fix",
     "prettier": "npx prettier . --check",
     "prettier:fix": "npx prettier . --write --log-level=warn",
     "test": "npx mocha@^11",
@@ -38,7 +38,11 @@
     "redis": "^4.6.13"
   },
   "devDependencies": {
-    "@haraka/eslint-config": "^1.1.2",
+    "@haraka/eslint-config": "^2.0.2",
     "haraka-test-fixtures": "^1.3.4"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "semi": false
   }
 }
