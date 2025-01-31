@@ -4,9 +4,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Unreleased
 
+### [2.1.7] - 2025-01-31
+
+- replace utils.in_array with [].includes
+- dep(eslint): upgrade to v9
+- doc(CONTRIBUTORS): updated
+
 ### [2.1.6] - 2024-11-08
 
-- fix missing error handler on redis client [#45](https://github.com/haraka/haraka-plugin-redis/issues/45)
+- fix missing error handler on redis client #61
 
 ### [2.1.5] - 2024-04-23
 
@@ -134,3 +140,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 [2.1.3]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.1.3
 [2.1.4]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.1.4
 [2.1.5]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.1.5
+[2.1.6]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.1.6
