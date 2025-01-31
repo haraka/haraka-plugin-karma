@@ -363,7 +363,10 @@ exports.tarpit_delay = function (score, connection, hook, k) {
   const delay = score * -1 // progressive tarpit
 
   // detect roaming users based on MSA ports that require auth
-  if ([587, 465].includes(connection.local.port) && ['ehlo', 'connect'].includes(hook)) {
+  if (
+    [587, 465].includes(connection.local.port) &&
+    ['ehlo', 'connect'].includes(hook)
+  ) {
     return this.tarpit_delay_msa(connection, delay, k)
   }
 
