@@ -363,10 +363,7 @@ exports.tarpit_delay = function (score, connection, hook, k) {
   const delay = score * -1 // progressive tarpit
 
   // detect roaming users based on MSA ports that require auth
-  if (
-    utils.in_array(connection.local.port, [587, 465]) &&
-    utils.in_array(hook, ['ehlo', 'connect'])
-  ) {
+  if ([587, 465].includes(connection.local.port) && ['ehlo', 'connect'].includes(hook)) {
     return this.tarpit_delay_msa(connection, delay, k)
   }
 
@@ -672,6 +669,19 @@ exports.hook_data_post = function (next, connection) {
   // goal: prevent delivery of spam before queue
 
   if (this.should_we_skip(connection)) return next()
+
+  /*
+  This should not be a default due to highly probability of false positives,
+  but I've found it extremely effective against a recent (most of 2024) spam
+  campaign that Gmail apparently has no interest in stopping.
+  if (connection.transaction.header.get_decoded('subject').match(/\p{Emoji}/gu)) {
+    connection.results.add(this, { msg: 'subject_contains_emoji' })
+    if (connection.transaction.mail_from.host === 'gmail.com') {
+      connection.results.incr(this, { score: -10 })
+      connection.results.add(this, { msg: 'emoji_from_gmail' })
+    }
+  }
+  */
 
   this.check_awards(connection) // update awards
 
