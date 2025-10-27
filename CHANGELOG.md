@@ -4,6 +4,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Unreleased
 
+### [2.1.8] - 2025-10-27
+
+- fix: use optional chaining in should_we_skip, fixes #63
 - reduce ASN details saved to results store
 - config: update plugin names
 
@@ -144,3 +147,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 [2.1.4]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.1.4
 [2.1.5]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.1.5
 [2.1.6]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.1.6
+[2.1.7]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.1.7
+[2.1.8]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.1.8
