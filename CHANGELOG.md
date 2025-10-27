@@ -4,6 +4,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Unreleased
 
+- reduce ASN details saved to results store
+- config: update plugin names
+
 ### [2.1.7] - 2025-01-31
 
 - replace utils.in_array with [].includes

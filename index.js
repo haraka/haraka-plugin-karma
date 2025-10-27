@@ -394,7 +394,7 @@ exports.tarpit_delay_msa = function (connection, delay, k) {
   // Reduce delay for good ASN history
   let asn = connection.results.get('asn')
   if (!asn) asn = connection.results.get('geoip')
-  if (asn && asn.asn && k.neighbors > 0) {
+  if (asn && asn.asn && asn.asn_score > 0) {
     connection.logdebug(this, `${trg} neighbors: ${delay}`)
     delay = delay - 2
   }
@@ -409,8 +409,8 @@ exports.tarpit_delay_msa = function (connection, delay, k) {
 }
 
 exports.should_we_skip = function (connection) {
-  if (connection.remote.is_private) return true
-  if (connection.notes.disable_karma) return true
+  if (connection.remote?.is_private) return true
+  if (connection.notes?.disable_karma) return true
   return false
 }
 
@@ -980,7 +980,6 @@ exports.check_asn = function (connection, asnkey) {
   if (!this.db) return
 
   const report_as = { name: this.name }
-
   if (this.cfg.asn.report_as) report_as.name = this.cfg.asn.report_as
 
   this.db
@@ -994,30 +993,24 @@ exports.check_asn = function (connection, asnkey) {
 
       this.db.hIncrBy(asnkey, 'connections', 1)
       const asn_score = parseInt(res.good || 0) - (res.bad || 0)
-      const asn_results = {
-        asn_score,
-        asn_connections: res.connections,
-        asn_good: res.good,
-        asn_bad: res.bad,
-        emit: true,
-      }
 
       if (asn_score) {
+        connection.results.add(report_as, { asn_score: asn_score })
         if (asn_score < -5) {
-          asn_results.fail = 'asn:history'
+          connection.results.add(report_as, { fail: 'asn:history' })
         } else if (asn_score > 5) {
-          asn_results.pass = 'asn:history'
+          connection.results.add(report_as, { pass: 'asn:history' })
         }
       }
 
       if (parseInt(res.bad) > 5 && parseInt(res.good) === 0) {
-        asn_results.fail = 'asn:all_bad'
+        connection.results.add(report_as, { fail: 'asn:all_bad' })
       }
       if (parseInt(res.good) > 5 && parseInt(res.bad) === 0) {
-        asn_results.pass = 'asn:all_good'
+        connection.results.add(report_as, { pass: 'asn:all_good' })
       }
 
-      connection.results.add(report_as, asn_results)
+      connection.results.add(report_as, { emit: true })
     })
     .catch((err) => {
       connection.results.add(this, { err })
