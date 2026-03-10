@@ -22,82 +22,73 @@ function _set_up(done) {
 }
 
 describe('karma_init', function () {
-  beforeEach(function (done) {
+  beforeEach(function () {
     this.plugin = new fixtures.plugin('karma')
-    done()
   })
 
-  it('load_karma_ini', function (done) {
+  it('load_karma_ini', function () {
     this.plugin.inherits('haraka-plugin-redis')
     this.plugin.load_karma_ini()
     assert.ok(this.plugin.cfg.asn)
     assert.ok(this.plugin.deny_hooks)
-    done()
   })
 })
 
 describe('results_init', function () {
   beforeEach(_set_up)
 
-  it('init, pre', function (done) {
+  it('init, pre', function () {
     const r = this.connection.results.get('karma')
     assert.equal(undefined, r)
-    done()
   })
 
-  it('init, empty cfg', function (done) {
+  it('init, empty cfg', function () {
     this.plugin.results_init(stub, this.connection)
     const r = this.connection.results.get('karma')
     assert.ok(r)
-    done()
   })
 
-  it('init, cfg', function (done) {
+  it('init, cfg', function () {
     this.plugin.cfg.awards = { test: 1 }
     this.plugin.results_init(stub, this.connection)
     const r = this.connection.results.get('karma')
     assert.ok(r)
     assert.ok(r.todo)
-    done()
   })
 
-  it('init, skip', function (done) {
+  it('init, skip', function () {
     this.connection.remote.is_private = true
     this.plugin.results_init(stub, this.connection)
     const r = this.connection.results.get('karma')
     assert.equal(undefined, r)
-    done()
   })
 
-  it('init, private skip', function (done) {
+  it('init, private skip', function () {
     this.connection.notes.disable_karma = true
     this.plugin.results_init(stub, this.connection)
     const r = this.connection.results.get('karma')
     assert.equal(undefined, r)
-    done()
   })
 })
 
 describe('assemble_note_obj', function () {
   beforeEach(_set_up)
 
-  it('no auth fails', function (done) {
+  it('no auth fails', function () {
     const obj = this.plugin.assemble_note_obj(
       this.connection,
       'notes.auth_fails',
     )
     assert.equal(undefined, obj)
-    done()
   })
 
-  it('has auth fails', function (done) {
+  it('has auth fails', function () {
     this.connection.notes.auth_fails = [1, 2]
     const obj = this.plugin.assemble_note_obj(
       this.connection,
       'notes.auth_fails',
     )
     assert.deepEqual([1, 2], obj)
-    done()
   })
 })
 
