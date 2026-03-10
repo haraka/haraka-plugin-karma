@@ -163,7 +163,7 @@ exports.check_result = function (connection, message) {
   // {"plugin":"geoip","result":{"country":"CN"}}
 
   const m = JSON.parse(message)
-  if (m && m.result && m.result.asn) {
+  if (m?.result?.asn) {
     this.check_result_asn(m.result.asn, connection)
   }
   if (!this.result_awards[m.plugin]) return // no awards for plugin
@@ -394,7 +394,7 @@ exports.tarpit_delay_msa = function (connection, delay, k) {
   // Reduce delay for good ASN history
   let asn = connection.results.get('asn')
   if (!asn) asn = connection.results.get('geoip')
-  if (asn && asn.asn && asn.asn_score > 0) {
+  if (asn?.asn && asn.asn_score > 0) {
     connection.logdebug(this, `${trg} neighbors: ${delay}`)
     delay = delay - 2
   }
