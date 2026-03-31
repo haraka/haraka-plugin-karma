@@ -4,6 +4,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Unreleased
 
+### [2.2.0] - 2026-03-31
+
+#### Added
+
+-
+
+#### Fixed
+
+-
+
+#### Changed
+
+- test: test runner is now node:test
+- test: coverage 58% -> 86%
+- remove unnecessary done callbacks in synchronous tests (#65)
+
 ### [2.1.8] - 2025-10-27
 
 - fix: use optional chaining in should_we_skip, fixes #63
@@ -149,3 +165,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 [2.1.6]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.1.6
 [2.1.7]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.1.7
 [2.1.8]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.1.8
+[2.2.0]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.2.0
