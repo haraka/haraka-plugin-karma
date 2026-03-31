@@ -931,7 +931,7 @@ exports.apply_award = function (connection, nl, award) {
           : nl
 
   if (trimmed.substring(0, 7) === 'rcpt_to') trimmed = trimmed.substring(8)
-  if (trimmed.substring(0, 7) === 'mail_from') trimmed = trimmed.substring(10)
+  if (trimmed.substring(0, 9) === 'mail_from') trimmed = trimmed.substring(10)
   if (trimmed.substring(0, 7) === 'connect') trimmed = trimmed.substring(8)
   if (trimmed.substring(0, 4) === 'data') trimmed = trimmed.substring(5)
 

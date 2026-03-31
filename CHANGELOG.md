@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 #### Changed
 
+- test: ES2024 updates
 - test: test runner is now node:test
 - test: coverage 58% -> 86%
 - remove unnecessary done callbacks in synchronous tests (#65)
