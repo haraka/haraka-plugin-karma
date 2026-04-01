@@ -198,5 +198,5 @@ Expect to use karma _with_ content filters.
 [ci-url]: https://github.com/haraka/haraka-plugin-karma/actions/workflows/ci.yml
 [cov-img]: https://codecov.io/github/haraka/haraka-plugin-karma/coverage.svg
 [cov-url]: https://codecov.io/github/haraka/haraka-plugin-karma
-[clim-img]: https://codeclimate.com/github/haraka/haraka-plugin-karma/badges/gpa.svg
-[clim-url]: https://codeclimate.com/github/haraka/haraka-plugin-karma
+[clim-img]: https://qlty.sh/gh/haraka/projects/haraka-plugin-karma/maintainability.svg
+[clim-url]: https://qlty.sh/gh/haraka/projects/haraka-plugin-karma
