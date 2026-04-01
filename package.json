@@ -8,15 +8,16 @@
     "config"
   ],
   "scripts": {
+    "clean": "rm -rf node_modules package-lock.json",
     "format": "npm run prettier:fix && npm run lint:fix",
     "lint": "npx eslint *.js test",
     "lint:fix": "npx eslint *.js test --fix",
     "prettier": "npx prettier . --check",
     "prettier:fix": "npx prettier . --write --log-level=warn",
     "test": "node --test",
+    "test:coverage": "npx c8 --reporter=text --reporter=text-summary npm test",
     "versions": "npx npm-dep-mgr check",
-    "versions:fix": "npx npm-dep-mgr update",
-    "test:coverage": "npx c8 --reporter=text --reporter=text-summary npm test"
+    "versions:fix": "npx npm-dep-mgr update"
   },
   "repository": {
     "type": "git",
@@ -34,9 +35,7 @@
   "dependencies": {
     "address-rfc2821": "^2.1.5",
     "haraka-constants": "^1.0.7",
-    "haraka-utils": "^1.1.4",
-    "haraka-plugin-redis": "^2.0.11",
-    "redis": "^5.11.0"
+    "haraka-plugin-redis": "^2.0.11"
   },
   "devDependencies": {
     "@haraka/eslint-config": "^2.0.4",

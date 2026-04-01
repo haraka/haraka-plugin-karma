@@ -1,5 +1,6 @@
 [![Build Status][ci-img]][ci-url]
 [![Code Climate][clim-img]][clim-url]
+[![Code Coverage][cov-img]][cov-url]
 
 # Karma - A heuristics based reputation engine for the Haraka MTA
 

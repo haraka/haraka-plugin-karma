@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 #### Changed
 
+- replace to_object with arrays
 - deps(all): updated to latest
 - style: ES2024 updates throughout
 - test: test runner is now node:test

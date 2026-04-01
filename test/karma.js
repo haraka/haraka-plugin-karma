@@ -12,7 +12,7 @@ const stub = fixtures.stub.stub
 function _set_up() {
   const plugin = new fixtures.plugin('karma')
   plugin.cfg = { main: {}, asn: {}, redis: {} }
-  plugin.deny_hooks = { connect: true }
+  plugin.deny_hooks = ['connect']
   plugin.tarpit_hooks = ['connect']
 
   const connection = fixtures.connection.createConnection({}, { notes: {} })
@@ -165,7 +165,7 @@ describe('hook_deny', () => {
 
   it('excluded plugin passes through', () => {
     let rc
-    plugin.deny_exclude_plugins = { access: true }
+    plugin.deny_exclude_plugins = ['access']
     plugin.hook_deny(
       (r) => {
         rc = r
@@ -178,7 +178,7 @@ describe('hook_deny', () => {
 
   it('excluded hook rcpt_to passes through', () => {
     let rc
-    plugin.deny_exclude_hooks = { rcpt_to: true }
+    plugin.deny_exclude_hooks = ['rcpt_to']
     plugin.hook_deny(
       (r) => {
         rc = r
@@ -191,7 +191,7 @@ describe('hook_deny', () => {
 
   it('excluded hook queue passes through', () => {
     let rc
-    plugin.deny_exclude_hooks = { queue: true }
+    plugin.deny_exclude_hooks = ['queue']
     plugin.hook_deny(
       (r) => {
         rc = r
@@ -233,8 +233,8 @@ describe('should_rspamd_greylist', () => {
 
   function setupGreylist() {
     ;({ plugin, connection } = _set_up())
-    plugin.cfg.greylist = { spamassassin_score: '5', rspamd_score: '6' }
-    plugin.greylist_asns = { 64496: true }
+    plugin.cfg.greylist = { spamassassin_score: 5, rspamd_score: 6 }
+    plugin.greylist_asns = ['64496']
     connection.results.add({ name: 'asn' }, { asn: 64496 })
     connection.transaction.results.add({ name: 'spamassassin' }, { hits: 7 })
     connection.transaction.results.add({ name: 'rspamd' }, { score: 8 })
@@ -242,28 +242,28 @@ describe('should_rspamd_greylist', () => {
 
   it('returns false when greylist_asns is not configured', () => {
     ;({ plugin, connection } = _set_up())
-    plugin.greylist_asns = null
+    plugin.greylist_asns = []
     assert.strictEqual(false, plugin.should_rspamd_greylist(connection))
   })
 
   it('returns false when connection ASN is not in the list', () => {
     setupGreylist()
-    plugin.greylist_asns = { 99999: true } // different ASN
+    plugin.greylist_asns = ['99999'] // different ASN
     assert.strictEqual(false, plugin.should_rspamd_greylist(connection))
   })
 
   it('returns false when connection has no ASN result', () => {
     const { plugin: p, connection: c } = _set_up()
-    p.cfg.greylist = { spamassassin_score: '5', rspamd_score: '6' }
-    p.greylist_asns = { 64496: true }
+    p.cfg.greylist = { spamassassin_score: 5, rspamd_score: 6 }
+    p.greylist_asns = ['64496']
     // no ASN result added
     assert.strictEqual(false, p.should_rspamd_greylist(c))
   })
 
   it('falls back to geoip result for ASN', () => {
     ;({ plugin, connection } = _set_up())
-    plugin.cfg.greylist = { spamassassin_score: '5', rspamd_score: '6' }
-    plugin.greylist_asns = { 64496: true }
+    plugin.cfg.greylist = { spamassassin_score: 5, rspamd_score: 6 }
+    plugin.greylist_asns = ['64496']
     connection.results.add({ name: 'geoip' }, { asn: 64496 })
     connection.transaction.results.add({ name: 'spamassassin' }, { hits: 7 })
     connection.transaction.results.add({ name: 'rspamd' }, { score: 8 })
@@ -279,8 +279,8 @@ describe('should_rspamd_greylist', () => {
   it('returns false when SpamAssassin result is absent', () => {
     setupGreylist()
     const { plugin: p, connection: c } = _set_up()
-    p.cfg.greylist = { spamassassin_score: '5', rspamd_score: '6' }
-    p.greylist_asns = { 64496: true }
+    p.cfg.greylist = { spamassassin_score: 5, rspamd_score: 6 }
+    p.greylist_asns = ['64496']
     c.results.add({ name: 'asn' }, { asn: 64496 })
     c.transaction.results.add({ name: 'rspamd' }, { score: 8 })
     // no spamassassin result
@@ -295,8 +295,8 @@ describe('should_rspamd_greylist', () => {
 
   it('returns false when rspamd result is absent', () => {
     const { plugin: p, connection: c } = _set_up()
-    p.cfg.greylist = { spamassassin_score: '5', rspamd_score: '6' }
-    p.greylist_asns = { 64496: true }
+    p.cfg.greylist = { spamassassin_score: 5, rspamd_score: 6 }
+    p.greylist_asns = ['64496']
     c.results.add({ name: 'asn' }, { asn: 64496 })
     c.transaction.results.add({ name: 'spamassassin' }, { hits: 7 })
     // no rspamd result
@@ -314,10 +314,10 @@ describe('hook_deny rspamd greylist', () => {
 
   function setupGreylistDeny() {
     ;({ plugin, connection } = _set_up())
-    plugin.deny_exclude_plugins = {}
-    plugin.deny_exclude_hooks = {}
-    plugin.cfg.greylist = { spamassassin_score: '5', rspamd_score: '6' }
-    plugin.greylist_asns = { 64496: true }
+    plugin.deny_exclude_plugins = []
+    plugin.deny_exclude_hooks = []
+    plugin.cfg.greylist = { spamassassin_score: 5, rspamd_score: 6 }
+    plugin.greylist_asns = ['64496']
     connection.results.add({ name: 'asn' }, { asn: 64496 })
     connection.transaction.results.add({ name: 'spamassassin' }, { hits: 7 })
     connection.transaction.results.add({ name: 'rspamd' }, { score: 8 })
@@ -338,7 +338,7 @@ describe('hook_deny rspamd greylist', () => {
 
   it('rspamd DENYSOFT is intercepted when ASN is not in list', () => {
     setupGreylistDeny()
-    plugin.greylist_asns = { 99999: true }
+    plugin.greylist_asns = ['99999']
     let rc
     plugin.hook_deny(
       (r) => {
@@ -906,7 +906,7 @@ describe('should_we_deny', () => {
 
   it('score below threshold on deny hook issues DENY', async () => {
     plugin.cfg.tarpit = { max: 1, delay: 0 }
-    plugin.deny_hooks = { connect: true }
+    plugin.deny_hooks = ['connect']
     connection.results.add(plugin, { score: -6 })
     const [rc, msg] = await new Promise((resolve) =>
       plugin.should_we_deny((...args) => resolve(args), connection, 'connect'),
@@ -917,7 +917,7 @@ describe('should_we_deny', () => {
 
   it('score below threshold on non-deny hook passes through', async () => {
     plugin.cfg.tarpit = { max: 1, delay: 0 }
-    plugin.deny_hooks = { helo: true }
+    plugin.deny_hooks = ['helo']
     connection.results.add(plugin, { score: -6 })
     const [rc] = await new Promise((resolve) =>
       plugin.should_we_deny((...args) => resolve(args), connection, 'connect'),
@@ -928,7 +928,7 @@ describe('should_we_deny', () => {
   it('custom negative threshold is used when configured', async () => {
     plugin.cfg.tarpit = { max: 1, delay: 0 }
     plugin.cfg.thresholds = { negative: -3 }
-    plugin.deny_hooks = { connect: true }
+    plugin.deny_hooks = ['connect']
     connection.results.add(plugin, { score: -4 })
     const [rc] = await new Promise((resolve) =>
       plugin.should_we_deny((...args) => resolve(args), connection, 'connect'),
@@ -939,7 +939,7 @@ describe('should_we_deny', () => {
   it('custom deny message has score interpolated', async () => {
     plugin.cfg.tarpit = { max: 1, delay: 0 }
     plugin.cfg.deny = { message: 'bad score {score} for {uuid}' }
-    plugin.deny_hooks = { connect: true }
+    plugin.deny_hooks = ['connect']
     connection.results.add(plugin, { score: -6 })
     const [rc, msg] = await new Promise((resolve) =>
       plugin.should_we_deny((...args) => resolve(args), connection, 'connect'),

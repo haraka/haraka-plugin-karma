@@ -3,38 +3,37 @@
 
 const constants = require('haraka-constants')
 const redis = require('redis')
-const utils = require('haraka-utils')
 
-const phase_prefixes = utils.to_object([
+const phase_prefixes = [
   'connect',
   'helo',
   'mail_from',
   'rcpt_to',
   'data',
-])
+]
 
 exports.register = function () {
   this.inherits('haraka-plugin-redis')
 
   // set up defaults
-  this.deny_hooks = utils.to_object([
+  this.deny_hooks = [
     'unrecognized_command',
     'helo',
     'data',
     'data_post',
     'queue',
     'queue_outbound',
-  ])
-  this.deny_exclude_hooks = utils.to_object('rcpt_to queue queue_outbound')
-  this.deny_exclude_plugins = utils.to_object([
+  ]
+  this.deny_exclude_hooks = ['rcpt_to', 'queue', 'queue_outbound']
+  this.deny_exclude_plugins = [
     'access',
     'helo.checks',
-    'data.headers',
+    'headers',
     'spamassassin',
     'mail_from.is_resolvable',
     'clamd',
     'tls',
-  ])
+  ]
 
   this.load_karma_ini()
 
@@ -58,24 +57,22 @@ exports.load_karma_ini = function () {
 
   const cfg = this.cfg
   if (cfg.deny?.hooks) {
-    this.deny_hooks = utils.to_object(cfg.deny.hooks)
+    this.deny_hooks = this.stringToArray(cfg.deny.hooks)
   }
 
   const e = cfg.deny_excludes
   if (e?.hooks) {
-    this.deny_exclude_hooks = utils.to_object(e.hooks)
+    this.deny_exclude_hooks = this.stringToArray(e.hooks)
   }
   if (e?.plugins) {
-    this.deny_exclude_plugins = utils.to_object(e.plugins)
+    this.deny_exclude_plugins = this.stringToArray(e.plugins)
   }
 
   if (cfg.result_awards) {
     this.preparse_result_awards()
   }
 
-  this.greylist_asns = cfg.greylist?.asns
-    ? utils.to_object(cfg.greylist.asns)
-    : null
+  this.greylist_asns = cfg.greylist?.asn ?? []
 
   if (!cfg.redis) cfg.redis = {}
   if (!cfg.redis.host && cfg.redis.server_ip) {
@@ -403,13 +400,11 @@ exports.should_we_skip = function (connection) {
 }
 
 exports.should_rspamd_greylist = function (connection) {
-  if (!this.greylist_asns) return false
-
   // check connection's ASN is in the configured list
   let asnr = connection.results.get('asn')
   if (!asnr?.asn) asnr = connection.results.get('geoip')
   if (!asnr?.asn) return false
-  if (!this.greylist_asns[String(asnr.asn)]) return false
+  if (!this.greylist_asns.includes(String(asnr.asn))) return false
 
   // check SpamAssassin score exceeds configured threshold
   const saScore = parseFloat(
@@ -455,7 +450,7 @@ exports.should_we_deny = function (next, connection, hook) {
   if (score > negative_limit) {
     return this.apply_tarpit(connection, hook, score, next)
   }
-  if (!this.deny_hooks[hook]) {
+  if (!this.deny_hooks.includes(hook)) {
     return this.apply_tarpit(connection, hook, score, next)
   }
 
@@ -482,7 +477,7 @@ exports.hook_deny = function (next, connection, params) {
   // exceptions, whose 'DENY' should not be captured
   if (pi_name) {
     if (pi_name === 'karma') return next()
-    if (this.deny_exclude_plugins[pi_name]) return next()
+    if (this.deny_exclude_plugins.includes(pi_name)) return next()
     // allow rspamd to greylist when configured ASN/score conditions are met
     if (
       pi_rc === constants.DENYSOFT &&
@@ -491,7 +486,7 @@ exports.hook_deny = function (next, connection, params) {
     )
       return next()
   }
-  if (pi_hook && this.deny_exclude_hooks[pi_hook]) return next()
+  if (pi_hook && this.deny_exclude_hooks.includes(pi_hook)) return next()
 
   if (!connection.results) return next(constants.OK) // resume the connection
 
@@ -766,7 +761,7 @@ exports.get_award_loc_from_results = function (connection, loc_bits) {
   let pi_name = loc_bits[1]
   let notekey = loc_bits[2]
 
-  if (phase_prefixes[pi_name]) {
+  if (phase_prefixes.includes(pi_name)) {
     pi_name = `${loc_bits[1]}.${loc_bits[2]}`
     notekey = loc_bits[3]
   }
@@ -971,7 +966,7 @@ exports.assemble_note_obj = function (prefix, key) {
   const parts = key.split('.')
   while (parts.length > 0) {
     let next = parts.shift()
-    if (phase_prefixes[next]) {
+    if (phase_prefixes.includes(next)) {
       next = `${next}.${parts.shift()}`
     }
     note = note[next]
@@ -1044,4 +1039,9 @@ exports.init_asn = function (asnkey, expire) {
     .hmSet(asnkey, { bad: 0, good: 0, connections: 1 })
     .expire(asnkey, expire * 2) // keep ASN longer
     .exec()
+}
+
+exports.stringToArray = (input) => {
+  if (typeof input !== 'string') throw new Error('Input must be a string')
+  return input.split(/[\s,;]+/).filter(item => item) // split and remove empty items
 }
