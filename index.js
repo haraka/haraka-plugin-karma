@@ -4,13 +4,7 @@
 const constants = require('haraka-constants')
 const redis = require('redis')
 
-const phase_prefixes = [
-  'connect',
-  'helo',
-  'mail_from',
-  'rcpt_to',
-  'data',
-]
+const phase_prefixes = ['connect', 'helo', 'mail_from', 'rcpt_to', 'data']
 
 exports.register = function () {
   this.inherits('haraka-plugin-redis')
@@ -1043,5 +1037,5 @@ exports.init_asn = function (asnkey, expire) {
 
 exports.stringToArray = (input) => {
   if (typeof input !== 'string') throw new Error('Input must be a string')
-  return input.split(/[\s,;]+/).filter(item => item) // split and remove empty items
+  return input.split(/[\s,;]+/).filter((item) => item) // split and remove empty items
 }
