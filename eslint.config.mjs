@@ -21,5 +21,15 @@ export default [
         ...globals.mocha,
       },
     },
+    rules: {
+      'no-unused-vars': [
+        'warn',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: 'ignore',
+        },
+      ],
+    },
   },
 ]

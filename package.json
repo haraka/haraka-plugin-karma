@@ -1,6 +1,6 @@
 {
   "name": "haraka-plugin-karma",
-  "version": "2.1.8",
+  "version": "2.2.0",
   "description": "A heuristics scoring and reputation engine for SMTP connections",
   "main": "index.js",
   "files": [
@@ -8,14 +8,16 @@
     "config"
   ],
   "scripts": {
+    "clean": "rm -rf node_modules package-lock.json",
     "format": "npm run prettier:fix && npm run lint:fix",
     "lint": "npx eslint *.js test",
     "lint:fix": "npx eslint *.js test --fix",
     "prettier": "npx prettier . --check",
     "prettier:fix": "npx prettier . --write --log-level=warn",
-    "test": "npx mocha",
-    "versions": "npx dependency-version-checker check",
-    "versions:fix": "npx dependency-version-checker update"
+    "test": "node --test",
+    "test:coverage": "npx c8 --reporter=text --reporter=text-summary npm test",
+    "versions": "npx npm-dep-mgr check",
+    "versions:fix": "npx npm-dep-mgr update"
   },
   "repository": {
     "type": "git",
@@ -31,15 +33,13 @@
   },
   "homepage": "https://github.com/haraka/haraka-plugin-karma#readme",
   "dependencies": {
-    "address-rfc2821": "^2.1.2",
-    "haraka-constants": "^1.0.6",
-    "haraka-utils": "^1.1.1",
-    "haraka-plugin-redis": "^2.0.6",
-    "redis": "^4.6.13"
+    "address-rfc2821": "^2.1.5",
+    "haraka-constants": "^1.0.7",
+    "haraka-plugin-redis": "^2.0.11"
   },
   "devDependencies": {
-    "@haraka/eslint-config": "^2.0.2",
-    "haraka-test-fixtures": "^1.3.4"
+    "@haraka/eslint-config": "^2.0.4",
+    "haraka-test-fixtures": "^1.4.1"
   },
   "prettier": {
     "singleQuote": true,
