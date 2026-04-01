@@ -228,6 +228,142 @@ describe('hook_deny', () => {
   })
 })
 
+describe('should_rspamd_greylist', () => {
+  let plugin, connection
+
+  function setupGreylist() {
+    ;({ plugin, connection } = _set_up())
+    plugin.cfg.greylist = { spamassassin_score: '5', rspamd_score: '6' }
+    plugin.greylist_asns = { 64496: true }
+    connection.results.add({ name: 'asn' }, { asn: 64496 })
+    connection.transaction.results.add({ name: 'spamassassin' }, { hits: 7 })
+    connection.transaction.results.add({ name: 'rspamd' }, { score: 8 })
+  }
+
+  it('returns false when greylist_asns is not configured', () => {
+    ;({ plugin, connection } = _set_up())
+    plugin.greylist_asns = null
+    assert.strictEqual(false, plugin.should_rspamd_greylist(connection))
+  })
+
+  it('returns false when connection ASN is not in the list', () => {
+    setupGreylist()
+    plugin.greylist_asns = { 99999: true } // different ASN
+    assert.strictEqual(false, plugin.should_rspamd_greylist(connection))
+  })
+
+  it('returns false when connection has no ASN result', () => {
+    const { plugin: p, connection: c } = _set_up()
+    p.cfg.greylist = { spamassassin_score: '5', rspamd_score: '6' }
+    p.greylist_asns = { 64496: true }
+    // no ASN result added
+    assert.strictEqual(false, p.should_rspamd_greylist(c))
+  })
+
+  it('falls back to geoip result for ASN', () => {
+    ;({ plugin, connection } = _set_up())
+    plugin.cfg.greylist = { spamassassin_score: '5', rspamd_score: '6' }
+    plugin.greylist_asns = { 64496: true }
+    connection.results.add({ name: 'geoip' }, { asn: 64496 })
+    connection.transaction.results.add({ name: 'spamassassin' }, { hits: 7 })
+    connection.transaction.results.add({ name: 'rspamd' }, { score: 8 })
+    assert.strictEqual(true, plugin.should_rspamd_greylist(connection))
+  })
+
+  it('returns false when SpamAssassin score is at or below threshold', () => {
+    setupGreylist()
+    connection.transaction.results.add({ name: 'spamassassin' }, { hits: 5 }) // == threshold
+    assert.strictEqual(false, plugin.should_rspamd_greylist(connection))
+  })
+
+  it('returns false when SpamAssassin result is absent', () => {
+    setupGreylist()
+    const { plugin: p, connection: c } = _set_up()
+    p.cfg.greylist = { spamassassin_score: '5', rspamd_score: '6' }
+    p.greylist_asns = { 64496: true }
+    c.results.add({ name: 'asn' }, { asn: 64496 })
+    c.transaction.results.add({ name: 'rspamd' }, { score: 8 })
+    // no spamassassin result
+    assert.strictEqual(false, p.should_rspamd_greylist(c))
+  })
+
+  it('returns false when rspamd score is at or below threshold', () => {
+    setupGreylist()
+    connection.transaction.results.add({ name: 'rspamd' }, { score: 6 }) // == threshold
+    assert.strictEqual(false, plugin.should_rspamd_greylist(connection))
+  })
+
+  it('returns false when rspamd result is absent', () => {
+    const { plugin: p, connection: c } = _set_up()
+    p.cfg.greylist = { spamassassin_score: '5', rspamd_score: '6' }
+    p.greylist_asns = { 64496: true }
+    c.results.add({ name: 'asn' }, { asn: 64496 })
+    c.transaction.results.add({ name: 'spamassassin' }, { hits: 7 })
+    // no rspamd result
+    assert.strictEqual(false, p.should_rspamd_greylist(c))
+  })
+
+  it('returns true when ASN matches and both scores exceed thresholds', () => {
+    setupGreylist()
+    assert.strictEqual(true, plugin.should_rspamd_greylist(connection))
+  })
+})
+
+describe('hook_deny rspamd greylist', () => {
+  let plugin, connection
+
+  function setupGreylistDeny() {
+    ;({ plugin, connection } = _set_up())
+    plugin.deny_exclude_plugins = {}
+    plugin.deny_exclude_hooks = {}
+    plugin.cfg.greylist = { spamassassin_score: '5', rspamd_score: '6' }
+    plugin.greylist_asns = { 64496: true }
+    connection.results.add({ name: 'asn' }, { asn: 64496 })
+    connection.transaction.results.add({ name: 'spamassassin' }, { hits: 7 })
+    connection.transaction.results.add({ name: 'rspamd' }, { score: 8 })
+  }
+
+  it('rspamd DENYSOFT passes through when all conditions are met', () => {
+    setupGreylistDeny()
+    let rc
+    plugin.hook_deny(
+      (r) => {
+        rc = r
+      },
+      connection,
+      [constants.DENYSOFT, 'greylist', 'rspamd', '', '', ''],
+    )
+    assert.strictEqual(undefined, rc)
+  })
+
+  it('rspamd DENYSOFT is intercepted when ASN is not in list', () => {
+    setupGreylistDeny()
+    plugin.greylist_asns = { 99999: true }
+    let rc
+    plugin.hook_deny(
+      (r) => {
+        rc = r
+      },
+      connection,
+      [constants.DENYSOFT, 'greylist', 'rspamd', '', '', ''],
+    )
+    assert.strictEqual(constants.OK, rc)
+  })
+
+  it('rspamd DENY (not DENYSOFT) is intercepted regardless of conditions', () => {
+    setupGreylistDeny()
+    let rc
+    plugin.hook_deny(
+      (r) => {
+        rc = r
+      },
+      connection,
+      [constants.DENY, 'reject', 'rspamd', '', '', ''],
+    )
+    assert.strictEqual(constants.OK, rc)
+  })
+})
+
 describe('get_award_location', () => {
   let plugin, connection
   beforeEach(() => ({ plugin, connection } = _set_up()))

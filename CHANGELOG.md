@@ -8,15 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 #### Added
 
--
-
-#### Fixed
-
--
+- allow rspamd to greylist ASNs when SA & rspamd agree
 
 #### Changed
 
-- test: ES2024 updates
+- deps(all): updated to latest
+- style: ES2024 updates throughout
 - test: test runner is now node:test
 - test: coverage 58% -> 86%
 - remove unnecessary done callbacks in synchronous tests (#65)

@@ -73,6 +73,10 @@ exports.load_karma_ini = function () {
     this.preparse_result_awards()
   }
 
+  this.greylist_asns = cfg.greylist?.asns
+    ? utils.to_object(cfg.greylist.asns)
+    : null
+
   if (!cfg.redis) cfg.redis = {}
   if (!cfg.redis.host && cfg.redis.server_ip) {
     cfg.redis.host = cfg.redis.server_ip // backwards compat
@@ -298,7 +302,7 @@ exports.check_result_length = function (thisResult, thisAward, conn) {
 }
 
 exports.check_result_exists = function (thisResult, thisAward, conn) {
-  for (const r of thisResult) {
+  for (const _r of thisResult) {
     const [operator] = thisAward.value.split(/\s+/)
 
     switch (operator) {
@@ -398,6 +402,38 @@ exports.should_we_skip = function (connection) {
   return false
 }
 
+exports.should_rspamd_greylist = function (connection) {
+  if (!this.greylist_asns) return false
+
+  // check connection's ASN is in the configured list
+  let asnr = connection.results.get('asn')
+  if (!asnr?.asn) asnr = connection.results.get('geoip')
+  if (!asnr?.asn) return false
+  if (!this.greylist_asns[String(asnr.asn)]) return false
+
+  // check SpamAssassin score exceeds configured threshold
+  const saScore = parseFloat(
+    connection.transaction?.results?.get('spamassassin')?.hits,
+  )
+  const saThreshold = parseFloat(this.cfg.greylist?.spamassassin_score)
+  if (isNaN(saScore) || isNaN(saThreshold) || saScore <= saThreshold)
+    return false
+
+  // check rspamd score exceeds configured threshold
+  const rspamdScore = parseFloat(
+    connection.transaction?.results?.get('rspamd')?.score,
+  )
+  const rspamdThreshold = parseFloat(this.cfg.greylist?.rspamd_score)
+  if (
+    isNaN(rspamdScore) ||
+    isNaN(rspamdThreshold) ||
+    rspamdScore <= rspamdThreshold
+  )
+    return false
+
+  return true
+}
+
 exports.should_we_deny = function (next, connection, hook) {
   const r = connection.results.get('karma')
   if (!r) return next()
@@ -441,12 +477,19 @@ exports.should_we_deny = function (next, connection, hook) {
 exports.hook_deny = function (next, connection, params) {
   if (this.should_we_skip(connection)) return next()
 
-  const [, , pi_name, , , pi_hook] = params
+  const [pi_rc, , pi_name, , , pi_hook] = params
 
   // exceptions, whose 'DENY' should not be captured
   if (pi_name) {
     if (pi_name === 'karma') return next()
     if (this.deny_exclude_plugins[pi_name]) return next()
+    // allow rspamd to greylist when configured ASN/score conditions are met
+    if (
+      pi_rc === constants.DENYSOFT &&
+      pi_name === 'rspamd' &&
+      this.should_rspamd_greylist(connection)
+    )
+      return next()
   }
   if (pi_hook && this.deny_exclude_hooks[pi_hook]) return next()
 
@@ -672,7 +715,7 @@ exports.hook_data_post = function (next, connection) {
   return this.should_we_deny(next, connection, 'data_post')
 }
 
-exports.increment = function (connection, key, val) {
+exports.increment = function (connection, key, _val) {
   if (!this.db) return
 
   this.db.hIncrBy(`karma|${connection.remote.ip}`, key, 1)
