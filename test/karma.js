@@ -1431,6 +1431,31 @@ describe('check_spammy_tld', () => {
     plugin.check_spammy_tld(new Address('user@example.com'), connection)
     assert.strictEqual(undefined, connection.results.store.karma)
   })
+
+  it('sa.com suffix matches *.sa.com sender', () => {
+    plugin.cfg.spammy_tlds = { 'sa.com': -3 }
+    plugin.check_spammy_tld(new Address('spam@phish.sa.com'), connection)
+    assert.strictEqual(-3, connection.results.store.karma.score)
+    assert.strictEqual('spammy.TLD', connection.results.store.karma.fail[0])
+  })
+
+  it('deep subdomain matches sa.com suffix', () => {
+    plugin.cfg.spammy_tlds = { 'sa.com': -3 }
+    plugin.check_spammy_tld(new Address('spam@a.b.sa.com'), connection)
+    assert.strictEqual(-3, connection.results.store.karma.score)
+  })
+
+  it('most-specific suffix wins over broader TLD', () => {
+    plugin.cfg.spammy_tlds = { 'sa.com': -3, com: -1 }
+    plugin.check_spammy_tld(new Address('spam@phish.sa.com'), connection)
+    assert.strictEqual(-3, connection.results.store.karma.score)
+  })
+
+  it('sa.com suffix does not match unrelated .com sender', () => {
+    plugin.cfg.spammy_tlds = { 'sa.com': -3 }
+    plugin.check_spammy_tld(new Address('user@example.com'), connection)
+    assert.strictEqual(undefined, connection.results.store.karma)
+  })
 })
 
 describe('tls', () => {
