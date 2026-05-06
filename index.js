@@ -402,25 +402,22 @@ exports.should_rspamd_greylist = function (connection) {
 
   // check SpamAssassin score exceeds configured threshold
   const saScore = parseFloat(
-    connection.transaction?.results?.get('spamassassin')?.hits,
+    connection.transaction?.results?.get('spamassassin')?.hits ?? 0,
   )
-  const saThreshold = parseFloat(this.cfg.greylist?.spamassassin_score)
-  if (isNaN(saScore) || isNaN(saThreshold) || saScore <= saThreshold)
-    return false
+  const saThreshold = parseFloat(this.cfg.greylist?.spamassassin_score ?? 5)
+  if (saScore >= saThreshold) return true
 
-  // check rspamd score exceeds configured threshold
-  const rspamdScore = parseFloat(
-    connection.transaction?.results?.get('rspamd')?.score,
-  )
-  const rspamdThreshold = parseFloat(this.cfg.greylist?.rspamd_score)
+  if (connection.transaction.header.get('X-Google-Group-Id')) return true
+
+  // image-only spam: message body is a single embedded image
   if (
-    isNaN(rspamdScore) ||
-    isNaN(rspamdThreshold) ||
-    rspamdScore <= rspamdThreshold
+    connection.transaction.header
+      .get('content-type')
+      ?.startsWith('multipart/related')
   )
-    return false
+    return true
 
-  return true
+  return false
 }
 
 exports.should_we_deny = function (next, connection, hook) {
