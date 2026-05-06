@@ -934,13 +934,17 @@ exports.check_spammy_tld = function (mail_from, connection) {
   if (!this.cfg.spammy_tlds) return
   if (mail_from.isNull()) return // null sender (bounce)
 
-  const from_tld = mail_from.host.split('.').pop()
+  const labels = mail_from.host.split('.')
 
-  const tld_penalty = parseFloat(this.cfg.spammy_tlds[from_tld] || 0)
-  if (tld_penalty === 0) return
+  for (let i = 0; i < labels.length; i++) {
+    const suffix = labels.slice(i).join('.')
+    const tld_penalty = parseFloat(this.cfg.spammy_tlds[suffix] || 0)
+    if (tld_penalty === 0) continue
 
-  connection.results.incr(this, { score: tld_penalty })
-  connection.results.add(this, { fail: 'spammy.TLD' })
+    connection.results.incr(this, { score: tld_penalty })
+    connection.results.add(this, { fail: 'spammy.TLD' })
+    return
+  }
 }
 
 exports.check_syntax_RcptTo = function (connection) {
