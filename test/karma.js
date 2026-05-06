@@ -270,42 +270,62 @@ describe('should_rspamd_greylist', () => {
     assert.strictEqual(true, plugin.should_rspamd_greylist(connection))
   })
 
-  it('returns false when SpamAssassin score is at or below threshold', () => {
+  it('returns false when SpamAssassin score is below threshold', () => {
+    setupGreylist()
+    connection.transaction.results.add({ name: 'spamassassin' }, { hits: 4 })
+    assert.strictEqual(false, plugin.should_rspamd_greylist(connection))
+  })
+
+  it('returns true when SpamAssassin score meets threshold', () => {
     setupGreylist()
     connection.transaction.results.add({ name: 'spamassassin' }, { hits: 5 }) // == threshold
-    assert.strictEqual(false, plugin.should_rspamd_greylist(connection))
+    assert.strictEqual(true, plugin.should_rspamd_greylist(connection))
   })
 
   it('returns false when SpamAssassin result is absent', () => {
-    setupGreylist()
     const { plugin: p, connection: c } = _set_up()
-    p.cfg.greylist = { spamassassin_score: 5, rspamd_score: 6 }
+    p.cfg.greylist = { spamassassin_score: 5 }
     p.greylist_asns = ['64496']
     c.results.add({ name: 'asn' }, { asn: 64496 })
-    c.transaction.results.add({ name: 'rspamd' }, { score: 8 })
-    // no spamassassin result
     assert.strictEqual(false, p.should_rspamd_greylist(c))
   })
 
-  it('returns false when rspamd score is at or below threshold', () => {
-    setupGreylist()
-    connection.transaction.results.add({ name: 'rspamd' }, { score: 6 }) // == threshold
-    assert.strictEqual(false, plugin.should_rspamd_greylist(connection))
-  })
-
-  it('returns false when rspamd result is absent', () => {
-    const { plugin: p, connection: c } = _set_up()
-    p.cfg.greylist = { spamassassin_score: 5, rspamd_score: 6 }
-    p.greylist_asns = ['64496']
-    c.results.add({ name: 'asn' }, { asn: 64496 })
-    c.transaction.results.add({ name: 'spamassassin' }, { hits: 7 })
-    // no rspamd result
-    assert.strictEqual(false, p.should_rspamd_greylist(c))
-  })
-
-  it('returns true when ASN matches and both scores exceed thresholds', () => {
+  it('returns true when ASN matches and SA score exceeds threshold', () => {
     setupGreylist()
     assert.strictEqual(true, plugin.should_rspamd_greylist(connection))
+  })
+
+  it('returns true when X-Google-Group-Id header is present', () => {
+    ;({ plugin, connection } = _set_up())
+    plugin.cfg.greylist = { spamassassin_score: 5 }
+    plugin.greylist_asns = ['15169']
+    connection.results.add({ name: 'asn' }, { asn: 15169 })
+    connection.transaction.header.add('X-Google-Group-Id', '47959600965')
+    assert.strictEqual(true, plugin.should_rspamd_greylist(connection))
+  })
+
+  it('returns true for image-only spam (multipart/related) from listed ASN', () => {
+    ;({ plugin, connection } = _set_up())
+    plugin.cfg.greylist = { spamassassin_score: 5 }
+    plugin.greylist_asns = ['15169']
+    connection.results.add({ name: 'asn' }, { asn: 15169 })
+    connection.transaction.header.add(
+      'Content-Type',
+      'multipart/related; boundary="0000000000004627ae065116fa7a"',
+    )
+    assert.strictEqual(true, plugin.should_rspamd_greylist(connection))
+  })
+
+  it('returns false for multipart/related when ASN is not listed', () => {
+    ;({ plugin, connection } = _set_up())
+    plugin.cfg.greylist = { spamassassin_score: 5 }
+    plugin.greylist_asns = ['99999']
+    connection.results.add({ name: 'asn' }, { asn: 15169 })
+    connection.transaction.header.add(
+      'Content-Type',
+      'multipart/related; boundary="abc"',
+    )
+    assert.strictEqual(false, plugin.should_rspamd_greylist(connection))
   })
 })
 
