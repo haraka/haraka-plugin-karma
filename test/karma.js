@@ -228,104 +228,96 @@ describe('hook_deny', () => {
   })
 })
 
-describe('should_rspamd_greylist', () => {
+describe('should_rspamd_deny', () => {
   let plugin, connection
 
   function setupGreylist() {
     ;({ plugin, connection } = _set_up())
-    plugin.cfg.greylist = { spamassassin_score: 5, rspamd_score: 6 }
-    plugin.greylist_asns = ['64496']
+    plugin.cfg.rspamd_deny = { spamassassin_score: 5 }
+    plugin.rspamdDenyAsns = ['64496']
     connection.results.add({ name: 'asn' }, { asn: 64496 })
     connection.transaction.results.add({ name: 'spamassassin' }, { hits: 7 })
     connection.transaction.results.add({ name: 'rspamd' }, { score: 8 })
   }
 
-  it('returns false when greylist_asns is not configured', () => {
+  it('returns false when rspamdDenyAsns is not configured', () => {
     ;({ plugin, connection } = _set_up())
-    plugin.greylist_asns = []
-    assert.strictEqual(false, plugin.should_rspamd_greylist(connection))
+    plugin.rspamdDenyAsns = []
+    assert.strictEqual(false, plugin.should_rspamd_deny(connection))
   })
 
   it('returns false when connection ASN is not in the list', () => {
     setupGreylist()
-    plugin.greylist_asns = ['99999'] // different ASN
-    assert.strictEqual(false, plugin.should_rspamd_greylist(connection))
+    plugin.rspamdDenyAsns = ['99999'] // different ASN
+    assert.strictEqual(false, plugin.should_rspamd_deny(connection))
   })
 
   it('returns false when connection has no ASN result', () => {
     const { plugin: p, connection: c } = _set_up()
-    p.cfg.greylist = { spamassassin_score: 5, rspamd_score: 6 }
-    p.greylist_asns = ['64496']
+    p.cfg.rspamd_deny = { spamassassin_score: 5 }
+    p.rspamdDenyAsns = ['64496']
     // no ASN result added
-    assert.strictEqual(false, p.should_rspamd_greylist(c))
+    assert.strictEqual(false, p.should_rspamd_deny(c))
   })
 
   it('falls back to geoip result for ASN', () => {
     ;({ plugin, connection } = _set_up())
-    plugin.cfg.greylist = { spamassassin_score: 5, rspamd_score: 6 }
-    plugin.greylist_asns = ['64496']
+    plugin.cfg.rspamd_deny = { spamassassin_score: 5 }
+    plugin.rspamdDenyAsns = ['64496']
     connection.results.add({ name: 'geoip' }, { asn: 64496 })
     connection.transaction.results.add({ name: 'spamassassin' }, { hits: 7 })
     connection.transaction.results.add({ name: 'rspamd' }, { score: 8 })
-    assert.strictEqual(true, plugin.should_rspamd_greylist(connection))
+    assert.strictEqual(true, plugin.should_rspamd_deny(connection))
   })
 
   it('returns false when SpamAssassin score is below threshold', () => {
     setupGreylist()
     connection.transaction.results.add({ name: 'spamassassin' }, { hits: 4 })
-    assert.strictEqual(false, plugin.should_rspamd_greylist(connection))
+    assert.strictEqual(false, plugin.should_rspamd_deny(connection))
   })
 
   it('returns true when SpamAssassin score meets threshold', () => {
     setupGreylist()
     connection.transaction.results.add({ name: 'spamassassin' }, { hits: 5 }) // == threshold
-    assert.strictEqual(true, plugin.should_rspamd_greylist(connection))
+    assert.strictEqual(true, plugin.should_rspamd_deny(connection))
   })
 
   it('returns false when SpamAssassin result is absent', () => {
     const { plugin: p, connection: c } = _set_up()
-    p.cfg.greylist = { spamassassin_score: 5 }
-    p.greylist_asns = ['64496']
+    p.cfg.rspamd_deny = { spamassassin_score: 5 }
+    p.rspamdDenyAsns = ['64496']
     c.results.add({ name: 'asn' }, { asn: 64496 })
-    assert.strictEqual(false, p.should_rspamd_greylist(c))
+    assert.strictEqual(false, p.should_rspamd_deny(c))
   })
 
   it('returns true when ASN matches and SA score exceeds threshold', () => {
     setupGreylist()
-    assert.strictEqual(true, plugin.should_rspamd_greylist(connection))
+    assert.strictEqual(true, plugin.should_rspamd_deny(connection))
   })
 
-  it('returns true when X-Google-Group-Id header is present', () => {
+  it('returns true for image-only spam from Google Groups header is present', () => {
     ;({ plugin, connection } = _set_up())
-    plugin.cfg.greylist = { spamassassin_score: 5 }
-    plugin.greylist_asns = ['15169']
+    plugin.cfg.rspamd_deny = { spamassassin_score: 5 }
+    plugin.rspamdDenyAsns = ['15169']
     connection.results.add({ name: 'asn' }, { asn: 15169 })
     connection.transaction.header.add('X-Google-Group-Id', '47959600965')
-    assert.strictEqual(true, plugin.should_rspamd_greylist(connection))
-  })
-
-  it('returns true for image-only spam (multipart/related) from listed ASN', () => {
-    ;({ plugin, connection } = _set_up())
-    plugin.cfg.greylist = { spamassassin_score: 5 }
-    plugin.greylist_asns = ['15169']
-    connection.results.add({ name: 'asn' }, { asn: 15169 })
     connection.transaction.header.add(
       'Content-Type',
       'multipart/related; boundary="0000000000004627ae065116fa7a"',
     )
-    assert.strictEqual(true, plugin.should_rspamd_greylist(connection))
+    assert.strictEqual(true, plugin.should_rspamd_deny(connection))
   })
 
   it('returns false for multipart/related when ASN is not listed', () => {
     ;({ plugin, connection } = _set_up())
-    plugin.cfg.greylist = { spamassassin_score: 5 }
-    plugin.greylist_asns = ['99999']
+    plugin.cfg.rspamd_deny = { spamassassin_score: 5 }
+    plugin.rspamdDenyAsns = ['99999']
     connection.results.add({ name: 'asn' }, { asn: 15169 })
     connection.transaction.header.add(
       'Content-Type',
       'multipart/related; boundary="abc"',
     )
-    assert.strictEqual(false, plugin.should_rspamd_greylist(connection))
+    assert.strictEqual(false, plugin.should_rspamd_deny(connection))
   })
 })
 
@@ -336,11 +328,10 @@ describe('hook_deny rspamd greylist', () => {
     ;({ plugin, connection } = _set_up())
     plugin.deny_exclude_plugins = []
     plugin.deny_exclude_hooks = []
-    plugin.cfg.greylist = { spamassassin_score: 5, rspamd_score: 6 }
-    plugin.greylist_asns = ['64496']
+    plugin.cfg.rspamd_deny = { spamassassin_score: 5 }
+    plugin.rspamdDenyAsns = ['64496']
     connection.results.add({ name: 'asn' }, { asn: 64496 })
     connection.transaction.results.add({ name: 'spamassassin' }, { hits: 7 })
-    connection.transaction.results.add({ name: 'rspamd' }, { score: 8 })
   }
 
   it('rspamd DENYSOFT passes through when all conditions are met', () => {
@@ -358,7 +349,7 @@ describe('hook_deny rspamd greylist', () => {
 
   it('rspamd DENYSOFT is intercepted when ASN is not in list', () => {
     setupGreylistDeny()
-    plugin.greylist_asns = ['99999']
+    plugin.rspamdDenyAsns = ['99999']
     let rc
     plugin.hook_deny(
       (r) => {
@@ -366,19 +357,6 @@ describe('hook_deny rspamd greylist', () => {
       },
       connection,
       [constants.DENYSOFT, 'greylist', 'rspamd', '', '', ''],
-    )
-    assert.strictEqual(constants.OK, rc)
-  })
-
-  it('rspamd DENY (not DENYSOFT) is intercepted regardless of conditions', () => {
-    setupGreylistDeny()
-    let rc
-    plugin.hook_deny(
-      (r) => {
-        rc = r
-      },
-      connection,
-      [constants.DENY, 'reject', 'rspamd', '', '', ''],
     )
     assert.strictEqual(constants.OK, rc)
   })
@@ -1428,6 +1406,31 @@ describe('check_spammy_tld', () => {
 
   it('non-spammy TLD is not scored', () => {
     plugin.cfg.spammy_tlds = { top: -3 }
+    plugin.check_spammy_tld(new Address('user@example.com'), connection)
+    assert.strictEqual(undefined, connection.results.store.karma)
+  })
+
+  it('sa.com suffix matches *.sa.com sender', () => {
+    plugin.cfg.spammy_tlds = { 'sa.com': -3 }
+    plugin.check_spammy_tld(new Address('spam@phish.sa.com'), connection)
+    assert.strictEqual(-3, connection.results.store.karma.score)
+    assert.strictEqual('spammy.TLD', connection.results.store.karma.fail[0])
+  })
+
+  it('deep subdomain matches sa.com suffix', () => {
+    plugin.cfg.spammy_tlds = { 'sa.com': -3 }
+    plugin.check_spammy_tld(new Address('spam@a.b.sa.com'), connection)
+    assert.strictEqual(-3, connection.results.store.karma.score)
+  })
+
+  it('most-specific suffix wins over broader TLD', () => {
+    plugin.cfg.spammy_tlds = { 'sa.com': -3, com: -1 }
+    plugin.check_spammy_tld(new Address('spam@phish.sa.com'), connection)
+    assert.strictEqual(-3, connection.results.store.karma.score)
+  })
+
+  it('sa.com suffix does not match unrelated .com sender', () => {
+    plugin.cfg.spammy_tlds = { 'sa.com': -3 }
     plugin.check_spammy_tld(new Address('user@example.com'), connection)
     assert.strictEqual(undefined, connection.results.store.karma)
   })
