@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ### [2.4.0] - 2026-05-06
 
 - extend spammy_tlds to support multi-label suffixes
+- allow rspamd to deny(soft) image-only spam from specific ASNs
 
 ### [2.3.0] - 2026-05-05
 
@@ -15,12 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### [2.2.0] - 2026-03-31
 
-#### Added
-
 - allow rspamd to greylist ASNs when SA & rspamd agree
-
-#### Changed
-
 - replace to_object with arrays
 - deps(all): updated to latest
 - style: ES2024 updates throughout

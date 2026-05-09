@@ -50,23 +50,15 @@ exports.load_karma_ini = function () {
   this.merge_redis_ini()
 
   const cfg = this.cfg
-  if (cfg.deny?.hooks) {
-    this.deny_hooks = this.stringToArray(cfg.deny.hooks)
-  }
+  if (cfg.deny?.hooks) this.deny_hooks = this.stringToArray(cfg.deny.hooks)
 
   const e = cfg.deny_excludes
-  if (e?.hooks) {
-    this.deny_exclude_hooks = this.stringToArray(e.hooks)
-  }
-  if (e?.plugins) {
-    this.deny_exclude_plugins = this.stringToArray(e.plugins)
-  }
+  if (e?.hooks) this.deny_exclude_hooks = this.stringToArray(e.hooks)
+  if (e?.plugins) this.deny_exclude_plugins = this.stringToArray(e.plugins)
 
-  if (cfg.result_awards) {
-    this.preparse_result_awards()
-  }
+  if (cfg.result_awards) this.preparse_result_awards()
 
-  this.greylist_asns = cfg.greylist?.asn ?? []
+  this.rspamdDenyAsns = cfg.rspamd_deny?.asn ?? cfg.greylist?.asn ?? []
 
   if (!cfg.redis) cfg.redis = {}
   if (!cfg.redis.host && cfg.redis.server_ip) {
@@ -393,29 +385,24 @@ exports.should_we_skip = function (connection) {
   return false
 }
 
-exports.should_rspamd_greylist = function (connection) {
+exports.should_rspamd_deny = function (connection) {
   // check connection's ASN is in the configured list
-  let asnr = connection.results.get('asn')
-  if (!asnr?.asn) asnr = connection.results.get('geoip')
-  if (!asnr?.asn) return false
-  if (!this.greylist_asns.includes(String(asnr.asn))) return false
+  const cr = connection.results
+  const asn = cr.get('asn')?.asn ?? cr.get('geoip')?.asn
+  if (!this.rspamdDenyAsns.includes(String(asn))) return false
 
   // check SpamAssassin score exceeds configured threshold
   const saScore = parseFloat(
     connection.transaction?.results?.get('spamassassin')?.hits ?? 0,
   )
-  const saThreshold = parseFloat(this.cfg.greylist?.spamassassin_score ?? 5)
-  if (saScore >= saThreshold) return true
+  const saThreshold = parseFloat(this.cfg.rspamd_deny?.spamassassin_score ?? 5)
+  if (saScore >= saThreshold) return true // SA & rspamd agree
 
-  if (connection.transaction.header.get('X-Google-Group-Id')) return true
-
-  // image-only spam: message body is a single embedded image
-  if (
-    connection.transaction.header
-      .get('content-type')
-      ?.startsWith('multipart/related')
-  )
-    return true
+  const gGroups = connection.transaction.header.get('X-Google-Group-Id')
+  const imgOnly = connection.transaction.header
+    .get('content-type')
+    ?.startsWith('multipart/related')
+  if (gGroups && imgOnly) return true
 
   return false
 }
@@ -445,10 +432,7 @@ exports.should_we_deny = function (next, connection, hook) {
     return this.apply_tarpit(connection, hook, score, next)
   }
 
-  let rejectMsg = 'very bad karma score: {score}'
-  if (this.cfg.deny && this.cfg.deny.message) {
-    rejectMsg = this.cfg.deny.message
-  }
+  let rejectMsg = this.cfg.deny?.message ?? `very bad karma score: ${score}`
 
   if (/\{/.test(rejectMsg)) {
     rejectMsg = rejectMsg.replace(/\{score\}/, score)
@@ -463,18 +447,13 @@ exports.should_we_deny = function (next, connection, hook) {
 exports.hook_deny = function (next, connection, params) {
   if (this.should_we_skip(connection)) return next()
 
-  const [pi_rc, , pi_name, , , pi_hook] = params
+  const [_pi_rc, , pi_name, , , pi_hook] = params
 
   // exceptions, whose 'DENY' should not be captured
   if (pi_name) {
     if (pi_name === 'karma') return next()
     if (this.deny_exclude_plugins.includes(pi_name)) return next()
-    // allow rspamd to greylist when configured ASN/score conditions are met
-    if (
-      pi_rc === constants.DENYSOFT &&
-      pi_name === 'rspamd' &&
-      this.should_rspamd_greylist(connection)
-    )
+    if (pi_name === 'rspamd' && this.should_rspamd_deny(connection))
       return next()
   }
   if (pi_hook && this.deny_exclude_hooks.includes(pi_hook)) return next()
