@@ -1090,11 +1090,14 @@ describe('should_we_deny', () => {
     plugin.rspamdDenyAsns = []
 
     // simulate rspamd's intercepted DENYSOFT
-    plugin.hook_deny(
-      () => {},
-      connection,
-      [constants.DENYSOFT, 'Try again later', 'rspamd', '', '', 'data_post'],
-    )
+    plugin.hook_deny(() => {}, connection, [
+      constants.DENYSOFT,
+      'Try again later',
+      'rspamd',
+      '',
+      '',
+      'data_post',
+    ])
     // additional negative score from elsewhere to push below threshold
     connection.results.incr(plugin, { score: -5 })
 
