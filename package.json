@@ -39,7 +39,7 @@
   },
   "devDependencies": {
     "@haraka/eslint-config": "^2.0.4",
-    "haraka-test-fixtures": "^1.4.1"
+    "haraka-test-fixtures": "^1.4.3"
   },
   "prettier": {
     "singleQuote": true,

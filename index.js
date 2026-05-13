@@ -439,15 +439,17 @@ exports.should_we_deny = function (next, connection, hook) {
     rejectMsg = rejectMsg.replace(/\{uuid\}/, connection.uuid)
   }
 
+  const deny_rc = r.deny_rc ?? constants.DENY
+
   return this.apply_tarpit(connection, hook, score, () => {
-    next(constants.DENY, rejectMsg)
+    next(deny_rc, rejectMsg)
   })
 }
 
 exports.hook_deny = function (next, connection, params) {
   if (this.should_we_skip(connection)) return next()
 
-  const [_pi_rc, , pi_name, , , pi_hook] = params
+  const [pi_rc, , pi_name, , , pi_hook] = params
 
   // exceptions, whose 'DENY' should not be captured
   if (pi_name) {
@@ -464,7 +466,29 @@ exports.hook_deny = function (next, connection, params) {
   connection.results.add(this, { msg: `deny: ${pi_name}` })
   connection.results.incr(this, { score: -2 })
 
+  // Remember the worst-severity intercepted code so a later karma-issued
+  // deny doesn't escalate a soft reject (e.g. rspamd greylist) to a hard
+  // reject.
+  this.track_intercepted_rc(connection, pi_rc)
+
   next(constants.OK) // resume the connection
+}
+
+exports.track_intercepted_rc = function (connection, pi_rc) {
+  const k = connection.results.get('karma')
+  if (!k) return
+
+  if (pi_rc === constants.DENY || pi_rc === constants.DENYDISCONNECT) {
+    connection.results.add(this, { deny_rc: constants.DENY })
+    return
+  }
+
+  if (
+    (pi_rc === constants.DENYSOFT || pi_rc === constants.DENYSOFTDISCONNECT) &&
+    k.deny_rc !== constants.DENY
+  ) {
+    connection.results.add(this, { deny_rc: constants.DENYSOFT })
+  }
 }
 
 exports.hook_connect = function (next, connection) {

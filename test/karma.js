@@ -137,7 +137,10 @@ describe('assemble_note_obj', () => {
 
 describe('hook_deny', () => {
   let plugin, connection
-  beforeEach(() => ({ plugin, connection } = _set_up()))
+  beforeEach(() => {
+    ;({ plugin, connection } = _set_up())
+    plugin.rspamdDenyAsns = []
+  })
 
   it('no pi_name resumes connection with OK', () => {
     let rc
@@ -225,6 +228,112 @@ describe('hook_deny', () => {
       ['', '', '', '', '', ''],
     )
     assert.strictEqual(constants.OK, rc)
+  })
+
+  it('intercepted DENYSOFT records deny_rc=DENYSOFT', () => {
+    plugin.deny_exclude_plugins = []
+    plugin.deny_exclude_hooks = []
+    plugin.hook_deny(() => {}, connection, [
+      constants.DENYSOFT,
+      '',
+      'rspamd',
+      '',
+      '',
+      '',
+    ])
+    assert.strictEqual(
+      constants.DENYSOFT,
+      connection.results.get('karma').deny_rc,
+    )
+  })
+
+  it('intercepted DENY records deny_rc=DENY', () => {
+    plugin.deny_exclude_plugins = []
+    plugin.deny_exclude_hooks = []
+    plugin.hook_deny(() => {}, connection, [
+      constants.DENY,
+      '',
+      'someplugin',
+      '',
+      '',
+      '',
+    ])
+    assert.strictEqual(constants.DENY, connection.results.get('karma').deny_rc)
+  })
+
+  it('intercepted DENYSOFTDISCONNECT records deny_rc=DENYSOFT', () => {
+    plugin.deny_exclude_plugins = []
+    plugin.deny_exclude_hooks = []
+    plugin.hook_deny(() => {}, connection, [
+      constants.DENYSOFTDISCONNECT,
+      '',
+      'someplugin',
+      '',
+      '',
+      '',
+    ])
+    assert.strictEqual(
+      constants.DENYSOFT,
+      connection.results.get('karma').deny_rc,
+    )
+  })
+
+  it('intercepted DENYDISCONNECT records deny_rc=DENY', () => {
+    plugin.deny_exclude_plugins = []
+    plugin.deny_exclude_hooks = []
+    plugin.hook_deny(() => {}, connection, [
+      constants.DENYDISCONNECT,
+      '',
+      'someplugin',
+      '',
+      '',
+      '',
+    ])
+    assert.strictEqual(constants.DENY, connection.results.get('karma').deny_rc)
+  })
+
+  it('hard deny is not downgraded by a later soft deny', () => {
+    plugin.deny_exclude_plugins = []
+    plugin.deny_exclude_hooks = []
+    plugin.hook_deny(() => {}, connection, [
+      constants.DENY,
+      '',
+      'someplugin',
+      '',
+      '',
+      '',
+    ])
+    plugin.hook_deny(() => {}, connection, [
+      constants.DENYSOFT,
+      '',
+      'rspamd',
+      '',
+      '',
+      '',
+    ])
+    assert.strictEqual(constants.DENY, connection.results.get('karma').deny_rc)
+  })
+
+  it('soft deny is upgraded by a later hard deny', () => {
+    plugin.deny_exclude_plugins = []
+    plugin.deny_exclude_hooks = []
+    plugin.hook_deny(() => {}, connection, [
+      constants.DENYSOFT,
+      '',
+      'rspamd',
+      '',
+      '',
+      '',
+    ])
+    plugin.hook_deny(() => {}, connection, [
+      constants.DENY,
+      '',
+      'someplugin',
+      '',
+      '',
+      '',
+    ])
+    assert.strictEqual(constants.DENY, connection.results.get('karma').deny_rc)
   })
 })
 
@@ -944,6 +1053,55 @@ describe('should_we_deny', () => {
     )
     assert.strictEqual(constants.DENY, rc)
     assert.ok(msg.includes('-6'))
+  })
+
+  it('cached DENYSOFT yields DENYSOFT, not DENY', async () => {
+    plugin.cfg.tarpit = { max: 1, delay: 0 }
+    plugin.deny_hooks = ['data']
+    connection.results.add(plugin, {
+      score: -6,
+      deny_rc: constants.DENYSOFT,
+    })
+    const [rc, msg] = await new Promise((resolve) =>
+      plugin.should_we_deny((...args) => resolve(args), connection, 'data'),
+    )
+    assert.strictEqual(constants.DENYSOFT, rc)
+    assert.ok(msg)
+  })
+
+  it('cached DENY still yields DENY', async () => {
+    plugin.cfg.tarpit = { max: 1, delay: 0 }
+    plugin.deny_hooks = ['data']
+    connection.results.add(plugin, {
+      score: -6,
+      deny_rc: constants.DENY,
+    })
+    const [rc] = await new Promise((resolve) =>
+      plugin.should_we_deny((...args) => resolve(args), connection, 'data'),
+    )
+    assert.strictEqual(constants.DENY, rc)
+  })
+
+  it('rspamd DENYSOFT intercept then deny hook yields DENYSOFT end-to-end', async () => {
+    plugin.cfg.tarpit = { max: 1, delay: 0 }
+    plugin.deny_hooks = ['queue']
+    plugin.deny_exclude_plugins = []
+    plugin.deny_exclude_hooks = []
+    plugin.rspamdDenyAsns = []
+
+    // simulate rspamd's intercepted DENYSOFT
+    plugin.hook_deny(
+      () => {},
+      connection,
+      [constants.DENYSOFT, 'Try again later', 'rspamd', '', '', 'data_post'],
+    )
+    // additional negative score from elsewhere to push below threshold
+    connection.results.incr(plugin, { score: -5 })
+
+    const [rc] = await new Promise((resolve) =>
+      plugin.should_we_deny((...args) => resolve(args), connection, 'queue'),
+    )
+    assert.strictEqual(constants.DENYSOFT, rc)
   })
 })
 
