@@ -7,8 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ### [2.4.1] - 2026-05-13
 
 - fix: after trapping a denysoft, return denysoft later (vs deny)
-- update spammy TLDs
-- fix: spamassassin hits -> score
+- config: update spammy TLDs
+- fix(config): spamassassin hits -> score
 
 ### [2.4.0] - 2026-05-06
 
