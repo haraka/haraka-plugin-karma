@@ -4,6 +4,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Unreleased
 
+### [2.4.1] - 2026-05-13
+
+- fix: after trapping a denysoft, return denysoft later (vs deny)
+- config: update spammy TLDs
+- fix(config): spamassassin hits -> score
+
 ### [2.4.0] - 2026-05-06
 
 - extend spammy_tlds to support multi-label suffixes
@@ -172,3 +178,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 [2.2.0]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.2.0
 [2.3.0]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.3.0
 [2.4.0]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.4.0
+[2.4.1]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.4.1
