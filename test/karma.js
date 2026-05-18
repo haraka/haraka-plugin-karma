@@ -3,7 +3,7 @@
 const assert = require('node:assert')
 const { describe, it, beforeEach } = require('node:test')
 
-const Address = require('@haraka/email-address').Address
+const { Address } = require('@haraka/email-address')
 const fixtures = require('haraka-test-fixtures')
 const constants = require('haraka-constants')
 
