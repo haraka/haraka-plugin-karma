@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 - dep(address-rfc2821): -> @haraka/email-address
 
+### [2.4.2] - 2026-05-20
+
+- fix: guard pubsub JSON.parse and validate payload shape in check_result
+- fix: guard new RegExp() in check_result_match against invalid config
+- fix: results_init fast-path now calls next() when notes.redis exists
+- fix: preserve originating plugin on awards so AUTH repeat-scoring works
+- fix: check_result_length measures collection length per karma.ini docs
+- fix: detect empty hGetAll ({}) in ip_history_from_redis and check_asn (node-redis v4)
+- docs: README threshold wording matches deny boundary
+
 ### [2.4.1] - 2026-05-13
 
 - fix: after trapping a denysoft, return denysoft later (vs deny)
@@ -183,4 +193,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 [2.3.0]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.3.0
 [2.4.0]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.4.0
 [2.4.1]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.4.1
+[2.4.2]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.4.2
 [2.5.0]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.5.0

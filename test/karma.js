@@ -86,6 +86,14 @@ describe('results_init', () => {
     plugin.results_init(stub, connection)
     assert.strictEqual(undefined, connection.results.get('karma'))
   })
+
+  it('calls next when another plugin already created notes.redis', async () => {
+    plugin.result_awards = { dnsbl: {} }
+    plugin.cfg.redis = {}
+    connection.server.notes.redis = { publish: () => {} }
+    connection.notes.redis = { existing: true }
+    await new Promise((resolve) => plugin.results_init(resolve, connection))
+  })
 })
 
 describe('should_we_skip', () => {
@@ -1272,9 +1280,9 @@ describe('check_result_length', () => {
 
   const base = { operator: 'length', reason: 'testing' }
 
-  it('eq match is scored', () => {
+  it('eq match on array length is scored', () => {
     plugin.check_result_length(
-      ['3'],
+      ['a', 'b', 'c'],
       makeAward({ ...base, value: 'eq 3' }),
       connection,
     )
@@ -1283,7 +1291,7 @@ describe('check_result_length', () => {
 
   it('eq mismatch is not scored', () => {
     plugin.check_result_length(
-      ['4'],
+      ['a', 'b'],
       makeAward({ ...base, value: 'eq 3' }),
       connection,
     )
@@ -1292,16 +1300,16 @@ describe('check_result_length', () => {
 
   it('gt match is scored', () => {
     plugin.check_result_length(
-      ['5'],
+      ['a', 'b', 'c', 'd'],
       makeAward({ ...base, value: 'gt 3' }),
       connection,
     )
     assert.strictEqual(2, connection.results.store.karma.score)
   })
 
-  it('gt mismatch is not scored', () => {
+  it('gt mismatch (at threshold) is not scored', () => {
     plugin.check_result_length(
-      ['3'],
+      ['a', 'b', 'c'],
       makeAward({ ...base, value: 'gt 3' }),
       connection,
     )
@@ -1310,25 +1318,34 @@ describe('check_result_length', () => {
 
   it('lt match is scored', () => {
     plugin.check_result_length(
-      ['2'],
+      ['a', 'b'],
       makeAward({ ...base, value: 'lt 3' }),
       connection,
     )
     assert.strictEqual(2, connection.results.store.karma.score)
   })
 
-  it('lt mismatch is not scored', () => {
+  it('lt mismatch (at threshold) is not scored', () => {
     plugin.check_result_length(
-      ['3'],
+      ['a', 'b', 'c'],
       makeAward({ ...base, value: 'lt 3' }),
       connection,
     )
     assert.strictEqual(undefined, connection.results.store.karma)
   })
 
+  it('gt 0 fires when a single value is present', () => {
+    plugin.check_result_length(
+      ['dnsbl.sorbs.net'],
+      makeAward({ ...base, value: 'gt 0' }),
+      connection,
+    )
+    assert.strictEqual(2, connection.results.store.karma.score)
+  })
+
   it('invalid operator is recorded as error', () => {
     plugin.check_result_length(
-      ['3'],
+      ['a'],
       makeAward({ ...base, value: 'invalid 3' }),
       connection,
     )
@@ -1408,6 +1425,14 @@ describe('preparse_result_awards', () => {
     assert.strictEqual('equals', plugin.result_awards.geoip.country[0].operator)
     assert.ok(plugin.result_awards.geoip.distance)
     assert.strictEqual('gt', plugin.result_awards.geoip.distance[0].operator)
+  })
+
+  it('stores originating plugin name on each award', () => {
+    plugin.cfg.result_awards = {
+      1: 'auth | fail | equals | true | -1 | bad auth | 0',
+    }
+    plugin.preparse_result_awards()
+    assert.strictEqual('auth', plugin.result_awards.auth.fail[0].plugin)
   })
 })
 
@@ -1536,6 +1561,51 @@ describe('check_result', () => {
       '{"plugin":"geoip","result":{"asn":"1234"}}',
     )
     assert.ok(called)
+  })
+
+  it('malformed JSON does not throw', () => {
+    plugin.result_awards = {}
+    let errLogged = false
+    connection.logerror = () => {
+      errLogged = true
+    }
+    assert.doesNotThrow(() => plugin.check_result(connection, 'not json {{{'))
+    assert.ok(errLogged)
+  })
+
+  it('non-object payload is ignored', () => {
+    plugin.result_awards = {}
+    assert.doesNotThrow(() => plugin.check_result(connection, '"a string"'))
+    assert.doesNotThrow(() => plugin.check_result(connection, 'null'))
+    assert.doesNotThrow(() => plugin.check_result(connection, '42'))
+  })
+
+  it('payload missing plugin field is ignored', () => {
+    plugin.result_awards = {}
+    assert.doesNotThrow(() =>
+      plugin.check_result(connection, '{"result":{"fail":"x"}}'),
+    )
+  })
+
+  it('invalid regex in award does not throw', () => {
+    plugin.cfg.result_awards = { 1: 'dnsbl | fail | match | [unclosed | -1' }
+    plugin.preparse_result_awards()
+    assert.doesNotThrow(() =>
+      plugin.check_result(
+        connection,
+        '{"plugin":"dnsbl","result":{"fail":"x"}}',
+      ),
+    )
+    assert.ok(connection.results.store.karma?.err?.length > 0)
+  })
+
+  it('repeated auth-plugin events are scored more than once', () => {
+    plugin.cfg.result_awards = { 1: 'auth | fail | equals | true | -1' }
+    plugin.preparse_result_awards()
+    const payload = '{"plugin":"auth","result":{"fail":true}}'
+    plugin.check_result(connection, payload)
+    plugin.check_result(connection, payload)
+    assert.strictEqual(-2, connection.results.store.karma.score)
   })
 })
 
@@ -1925,7 +1995,7 @@ describe('check_asn', () => {
   beforeEach(() => {
     ;({ plugin, connection } = _set_up())
     plugin.db = {
-      hGetAll: () => Promise.resolve(null),
+      hGetAll: () => Promise.resolve({}),
       hIncrBy: () => {},
     }
     plugin.init_asn = () => {}
@@ -2029,7 +2099,7 @@ describe('ip_history_from_redis', () => {
   let plugin, connection
   beforeEach(() => {
     ;({ plugin, connection } = _set_up())
-    plugin.db = { hGetAll: () => Promise.resolve(null) }
+    plugin.db = { hGetAll: () => Promise.resolve({}) }
     plugin.init_ip = () => {}
   })
 

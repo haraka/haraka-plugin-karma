@@ -101,7 +101,7 @@ exports.results_init = async function (next, connection) {
 
   if (connection.notes.redis) {
     connection.logdebug(this, `redis already subscribed`)
-    return // another plugin has already called this.
+    return next() // another plugin has already called this.
   }
 
   connection.notes.redis = redis.createClient(this.redisCfg.pubsub)
@@ -134,7 +134,15 @@ exports.preparse_result_awards = function () {
 
     if (!ra[pi_name][prop]) ra[pi_name][prop] = []
 
-    ra[pi_name][prop].push({ id: anum, operator, value, award, reason, resolv })
+    ra[pi_name][prop].push({
+      id: anum,
+      plugin: pi_name,
+      operator,
+      value,
+      award,
+      reason,
+      resolv,
+    })
   }
 }
 
@@ -142,8 +150,17 @@ exports.check_result = function (connection, message) {
   // {"plugin":"karma","result":{"fail":"spamassassin.hits"}}
   // {"plugin":"geoip","result":{"country":"CN"}}
 
-  const m = JSON.parse(message)
-  if (m?.result?.asn) {
+  let m
+  try {
+    m = JSON.parse(message)
+  } catch (err) {
+    connection.logerror(this, `invalid pubsub payload: ${err.message}`)
+    return
+  }
+  if (!m || typeof m !== 'object' || typeof m.plugin !== 'string') return
+  if (!m.result || typeof m.result !== 'object') return
+
+  if (m.result.asn) {
     this.check_result_asn(m.result.asn, connection)
   }
   if (!this.result_awards[m.plugin]) return // no awards for plugin
@@ -247,7 +264,13 @@ exports.check_result_equal = function (thisResult, thisAward, conn) {
 }
 
 exports.check_result_match = function (thisResult, thisAward, conn) {
-  const re = new RegExp(thisAward.value, 'i')
+  let re
+  try {
+    re = new RegExp(thisAward.value, 'i')
+  } catch {
+    conn.results.add(this, { err: `invalid regex: ${thisAward.value}` })
+    return
+  }
 
   for (const element of thisResult) {
     if (!re.test(element)) continue
@@ -259,29 +282,31 @@ exports.check_result_match = function (thisResult, thisAward, conn) {
 }
 
 exports.check_result_length = function (thisResult, thisAward, conn) {
-  for (const element of thisResult) {
-    const [operator, qty] = thisAward.value.split(/\s+/)
+  const [operator, qty] = thisAward.value.split(/\s+/)
+  const len = thisResult.length
+  const threshold = parseFloat(qty)
 
-    switch (operator) {
-      case 'eq':
-      case 'equal':
-      case 'equals':
-        if (parseInt(element, 10) != parseInt(qty, 10)) continue
-        break
-      case 'gt':
-        if (parseInt(element, 10) <= parseInt(qty, 10)) continue
-        break
-      case 'lt':
-        if (parseInt(element, 10) >= parseInt(qty, 10)) continue
-        break
-      default:
-        conn.results.add(this, { err: `invalid operator: ${operator}` })
-        continue
-    }
-
-    conn.results.incr(this, { score: thisAward.award })
-    conn.results.push(this, { awards: thisAward.id })
+  switch (operator) {
+    case 'eq':
+    case 'equal':
+    case 'equals':
+      if (len !== threshold) return
+      break
+    case 'gt':
+      if (len <= threshold) return
+      break
+    case 'lt':
+      if (len >= threshold) return
+      break
+    default:
+      conn.results.add(this, { err: `invalid operator: ${operator}` })
+      return
   }
+
+  if (conn.results.has('karma', 'awards', thisAward.id)) return
+
+  conn.results.incr(this, { score: thisAward.award })
+  conn.results.push(this, { awards: thisAward.id })
 }
 
 exports.check_result_exists = function (thisResult, thisAward, conn) {
@@ -577,7 +602,7 @@ exports.ip_history_from_redis = async function (next, connection) {
   try {
     const dbr = await this.db.hGetAll(dbkey)
 
-    if (dbr === null) {
+    if (!dbr || Object.keys(dbr).length === 0) {
       this.init_ip(dbkey, connection.remote.ip, expire)
       return next()
     }
@@ -982,7 +1007,7 @@ exports.check_asn = async function (connection, asnkey) {
   try {
     const res = await this.db.hGetAll(asnkey)
 
-    if (res === null) {
+    if (!res || Object.keys(res).length === 0) {
       const expire = (this.cfg.redis.expire_days || 60) * 86400 // days
       this.init_asn(asnkey, expire)
       return
