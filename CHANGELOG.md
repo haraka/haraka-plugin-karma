@@ -4,6 +4,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Unreleased
 
+### [2.5.0] - 2026-05-17
+
+- dep(address-rfc2821): -> @haraka/email-address
+
 ### [2.4.1] - 2026-05-13
 
 - fix: after trapping a denysoft, return denysoft later (vs deny)
@@ -32,7 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### [2.1.8] - 2025-10-27
 
-- fix: use optional chaining in should_we_skip, fixes #63
+- fix: use optional chaining in should_we_skip
 - reduce ASN details saved to results store
 - config: update plugin names
 
@@ -179,3 +183,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 [2.3.0]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.3.0
 [2.4.0]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.4.0
 [2.4.1]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.4.1
+[2.5.0]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.5.0

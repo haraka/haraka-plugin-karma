@@ -1,6 +1,6 @@
 {
   "name": "haraka-plugin-karma",
-  "version": "2.4.1",
+  "version": "2.5.0",
   "description": "A heuristics scoring and reputation engine for SMTP connections",
   "main": "index.js",
   "files": [
@@ -15,7 +15,8 @@
     "prettier": "npx prettier . --check",
     "prettier:fix": "npx prettier . --write --log-level=warn",
     "test": "node --test",
-    "test:coverage": "npx c8 --reporter=text --reporter=text-summary npm test",
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-exclude=package.json --test-coverage-exclude=test/*.js",
+    "test:coverage:lcov": "mkdir -p coverage && node --test --experimental-test-coverage --test-reporter=lcov --test-reporter-destination=coverage/lcov.info test/*.js",
     "versions": "npx npm-dep-mgr check",
     "versions:fix": "npx npm-dep-mgr update"
   },
@@ -33,11 +34,11 @@
   },
   "homepage": "https://github.com/haraka/haraka-plugin-karma#readme",
   "dependencies": {
-    "address-rfc2821": "^2.1.5",
     "haraka-constants": "^1.0.7",
     "haraka-plugin-redis": "^2.0.11"
   },
   "devDependencies": {
+    "@haraka/email-address": "^3.1.2",
     "@haraka/eslint-config": "^2.0.4",
     "haraka-test-fixtures": "^1.4.3"
   },
