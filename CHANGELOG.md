@@ -4,11 +4,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Unreleased
 
-### [2.5.0] - 2026-05-17
-
-- dep(address-rfc2821): -> @haraka/email-address
-
-### [2.4.2] - 2026-05-20
+### [2.5.1] - 2026-05-24
 
 - fix: guard pubsub JSON.parse and validate payload shape in check_result
 - fix: guard new RegExp() in check_result_match against invalid config
@@ -17,6 +13,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - fix: check_result_length measures collection length per karma.ini docs
 - fix: detect empty hGetAll ({}) in ip_history_from_redis and check_asn (node-redis v4)
 - docs: README threshold wording matches deny boundary
+
+### [2.5.0] - 2026-05-24
+
+- dep(address-rfc2821): -> @haraka/email-address
 
 ### [2.4.1] - 2026-05-13
 
