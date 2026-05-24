@@ -193,5 +193,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 [2.3.0]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.3.0
 [2.4.0]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.4.0
 [2.4.1]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.4.1
-[2.4.2]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.4.2
 [2.5.0]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.5.0
+[2.5.1]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.5.1
