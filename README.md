@@ -20,7 +20,7 @@ In order to score a plugins results, plugins must save their results to the [Res
 
 ## How Karma Works
 
-Karma takes a holistic view of **connections**. During the connection, karma collects these results and applies the [result_awards](#awards) defined in `karma.ini`. Once a connection/message exceeds the threshold.negative score (default: -8), karma rejects it at the next [deny]hook.
+Karma takes a holistic view of **connections**. During the connection, karma collects these results and applies the [result_awards](#awards) defined in `karma.ini`. Once a connection/message reaches the threshold.negative score (default: -8), karma rejects it at the next [deny]hook.
 
 The scoring mechanism is not dissimilar to [SpamAssassin][sa-url], but Karma has some particular advantages:
 
@@ -51,7 +51,7 @@ Karma performs checks early and often, maximizing the penality it can exact upon
 
 ### Deny / Reject
 
-When connections become worse than [thresholds]negative, they are denied during the next [deny]hook.
+When a connection's score reaches [thresholds]negative (equal or lower), it is denied during the next [deny]hook.
 
 ### History
 
