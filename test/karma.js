@@ -14,6 +14,10 @@ function _set_up() {
   plugin.tarpit_hooks = ['connect']
 
   const connection = makeConnection({ withTxn: true, server: { notes: {} } })
+  // makeConnection's `server` option lands in 1.7.1; pre-1.7.1 it's a no-op
+  // and connection.server is {}. Seed notes explicitly so tests that inject
+  // shared state (e.g. notes.redis) work on both versions.
+  connection.server.notes ??= {}
 
   return { plugin, connection }
 }
@@ -87,7 +91,7 @@ describe('results_init', () => {
   it('calls next when another plugin already created notes.redis', async () => {
     plugin.result_awards = { dnsbl: {} }
     plugin.cfg.redis = {}
-    connection.server.notes.redis = { publish: () => {} }
+    connection.server.notes.redis = { publish: () => Promise.resolve() }
     connection.notes.redis = { existing: true }
     await new Promise((resolve) => plugin.results_init(resolve, connection))
   })
