@@ -43,6 +43,31 @@ describe('karma_init', () => {
     assert.ok(plugin.cfg.asn)
     assert.ok(plugin.deny_hooks)
   })
+
+  it('register installs hook bindings and deny_exclude_plugins defaults', () => {
+    const plugin = makePlugin('karma', { register: false })
+    plugin.register()
+    assert.ok(plugin.deny_exclude_plugins.includes('access'))
+    assert.ok(plugin.deny_exclude_plugins.includes('tls'))
+    assert.ok(plugin.hooks.init_master.includes('init_redis_plugin'))
+    assert.ok(plugin.hooks.connect_init.includes('results_init'))
+    assert.ok(plugin.hooks.connect_init.includes('ip_history_from_redis'))
+  })
+
+  it('load_karma_ini maps redis.server_ip -> redis.host (back-compat)', () => {
+    const plugin = makePlugin('karma', { register: false })
+    plugin.inherits('haraka-plugin-redis')
+    const orig = plugin.config.get.bind(plugin.config)
+    plugin.config.get = (name, ...rest) => {
+      const cfg = orig(name, ...rest)
+      if (name === 'karma.ini')
+        cfg.redis = { server_ip: '10.0.0.1', server_port: '6380' }
+      return cfg
+    }
+    plugin.load_karma_ini()
+    assert.equal(plugin.cfg.redis.host, '10.0.0.1')
+    assert.equal(plugin.cfg.redis.port, '6380')
+  })
 })
 
 describe('results_init', () => {
@@ -849,6 +874,11 @@ describe('apply_award', () => {
   it('negative award goes to fail', () => {
     plugin.apply_award(connection, 'notes.test', -1)
     assert.strictEqual('test', connection.results.get('karma').fail[0])
+  })
+
+  it('keeps bare names with no recognized prefix', () => {
+    plugin.apply_award(connection, 'bare_key', 1)
+    assert.strictEqual('bare_key', connection.results.get('karma').pass[0])
   })
 })
 
