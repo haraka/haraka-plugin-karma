@@ -4,6 +4,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Unreleased
 
+- test: refactored against test-fixtures 1.7.0
+
 ### [2.5.1] - 2026-05-24
 
 - fix: guard pubsub JSON.parse and validate payload shape in check_result

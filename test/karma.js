@@ -4,19 +4,20 @@ const assert = require('node:assert')
 const { describe, it, beforeEach } = require('node:test')
 
 const { Address } = require('@haraka/email-address')
-const fixtures = require('haraka-test-fixtures')
+const { makeConnection, makePlugin, stub } = require('haraka-test-fixtures')
 const constants = require('haraka-constants')
 
-const stub = fixtures.stub.stub
-
 function _set_up() {
-  const plugin = new fixtures.plugin('karma')
+  const plugin = makePlugin('karma', { register: false })
   plugin.cfg = { main: {}, asn: {}, redis: {} }
   plugin.deny_hooks = ['connect']
   plugin.tarpit_hooks = ['connect']
 
-  const connection = fixtures.connection.createConnection({}, { notes: {} })
-  connection.init_transaction()
+  const connection = makeConnection({ withTxn: true, server: { notes: {} } })
+  // makeConnection's `server` option lands in 1.7.1; pre-1.7.1 it's a no-op
+  // and connection.server is {}. Seed notes explicitly so tests that inject
+  // shared state (e.g. notes.redis) work on both versions.
+  connection.server.notes ??= {}
 
   return { plugin, connection }
 }
@@ -36,11 +37,36 @@ function makeAward(overrides = {}) {
 
 describe('karma_init', () => {
   it('load_karma_ini', () => {
-    const plugin = new fixtures.plugin('karma')
+    const plugin = makePlugin('karma', { register: false })
     plugin.inherits('haraka-plugin-redis')
     plugin.load_karma_ini()
     assert.ok(plugin.cfg.asn)
     assert.ok(plugin.deny_hooks)
+  })
+
+  it('register installs hook bindings and deny_exclude_plugins defaults', () => {
+    const plugin = makePlugin('karma', { register: false })
+    plugin.register()
+    assert.ok(plugin.deny_exclude_plugins.includes('access'))
+    assert.ok(plugin.deny_exclude_plugins.includes('tls'))
+    assert.ok(plugin.hooks.init_master.includes('init_redis_plugin'))
+    assert.ok(plugin.hooks.connect_init.includes('results_init'))
+    assert.ok(plugin.hooks.connect_init.includes('ip_history_from_redis'))
+  })
+
+  it('load_karma_ini maps redis.server_ip -> redis.host (back-compat)', () => {
+    const plugin = makePlugin('karma', { register: false })
+    plugin.inherits('haraka-plugin-redis')
+    const orig = plugin.config.get.bind(plugin.config)
+    plugin.config.get = (name, ...rest) => {
+      const cfg = orig(name, ...rest)
+      if (name === 'karma.ini')
+        cfg.redis = { server_ip: '10.0.0.1', server_port: '6380' }
+      return cfg
+    }
+    plugin.load_karma_ini()
+    assert.equal(plugin.cfg.redis.host, '10.0.0.1')
+    assert.equal(plugin.cfg.redis.port, '6380')
   })
 })
 
@@ -90,7 +116,7 @@ describe('results_init', () => {
   it('calls next when another plugin already created notes.redis', async () => {
     plugin.result_awards = { dnsbl: {} }
     plugin.cfg.redis = {}
-    connection.server.notes.redis = { publish: () => {} }
+    connection.server.notes.redis = { publish: () => Promise.resolve() }
     connection.notes.redis = { existing: true }
     await new Promise((resolve) => plugin.results_init(resolve, connection))
   })
@@ -848,6 +874,11 @@ describe('apply_award', () => {
   it('negative award goes to fail', () => {
     plugin.apply_award(connection, 'notes.test', -1)
     assert.strictEqual('test', connection.results.get('karma').fail[0])
+  })
+
+  it('keeps bare names with no recognized prefix', () => {
+    plugin.apply_award(connection, 'bare_key', 1)
+    assert.strictEqual('bare_key', connection.results.get('karma').pass[0])
   })
 })
 

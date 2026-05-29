@@ -1,8 +1,6 @@
-[![Build Status][ci-img]][ci-url]
-[![Code Climate][clim-img]][clim-url]
-[![Code Coverage][cov-img]][cov-url]
-
 # Karma - A heuristics based reputation engine for the Haraka MTA
+
+[![Test][ci-img]][ci-url] [![Cover][cov-img]][cov-url] [![Qlty][qlty-img]][qlty-url]
 
 Karma is a heuristic scoring engine that uses connection metadata and other Haraka plugin data as inputs. Connections scoring in excess of specified thresholds are rewarded or [penalized](#penalties) in proportionate ways.
 
@@ -186,6 +184,14 @@ Karma is most effective at filtering mail delivered by bots and rogue servers.
 Spam delivered by servers with good reputations normally pass karma's checks.
 Expect to use karma _with_ content filters.
 
+<!-- leave these buried at the bottom of the document -->
+
+[ci-img]: https://github.com/haraka/haraka-plugin-karma/actions/workflows/ci.yml/badge.svg
+[ci-url]: https://github.com/haraka/haraka-plugin-karma/actions/workflows/ci.yml
+[cov-img]: https://codecov.io/github/haraka/haraka-plugin-karma/coverage.svg
+[cov-url]: https://codecov.io/github/haraka/haraka-plugin-karma
+[qlty-img]: https://qlty.sh/gh/haraka/projects/haraka-plugin-karma/maintainability.svg
+[qlty-url]: https://qlty.sh/gh/haraka/projects/haraka-plugin-karma
 [p0f-url]: /manual/plugins/connect.p0f.html
 [geoip-url]: https://github.com/haraka/haraka-plugin-geoip
 [dnsbl-url]: /manual/plugins/dnsbl.html
@@ -194,9 +200,3 @@ Expect to use karma _with_ content filters.
 [sa-url]: http://haraka.github.io/manual/plugins/spamassassin.html
 [snf-url]: http://haraka.github.io/manual/plugins/messagesniffer.html
 [results-url]: http://haraka.github.io/manual/Results.html
-[ci-img]: https://github.com/haraka/haraka-plugin-karma/actions/workflows/ci.yml/badge.svg
-[ci-url]: https://github.com/haraka/haraka-plugin-karma/actions/workflows/ci.yml
-[cov-img]: https://codecov.io/github/haraka/haraka-plugin-karma/coverage.svg
-[cov-url]: https://codecov.io/github/haraka/haraka-plugin-karma
-[clim-img]: https://qlty.sh/gh/haraka/projects/haraka-plugin-karma/maintainability.svg
-[clim-url]: https://qlty.sh/gh/haraka/projects/haraka-plugin-karma
