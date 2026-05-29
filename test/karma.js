@@ -4,19 +4,16 @@ const assert = require('node:assert')
 const { describe, it, beforeEach } = require('node:test')
 
 const { Address } = require('@haraka/email-address')
-const fixtures = require('haraka-test-fixtures')
+const { makeConnection, makePlugin, stub } = require('haraka-test-fixtures')
 const constants = require('haraka-constants')
 
-const stub = fixtures.stub.stub
-
 function _set_up() {
-  const plugin = new fixtures.plugin('karma')
+  const plugin = makePlugin('karma', { register: false })
   plugin.cfg = { main: {}, asn: {}, redis: {} }
   plugin.deny_hooks = ['connect']
   plugin.tarpit_hooks = ['connect']
 
-  const connection = fixtures.connection.createConnection({}, { notes: {} })
-  connection.init_transaction()
+  const connection = makeConnection({ withTxn: true, server: { notes: {} } })
 
   return { plugin, connection }
 }
@@ -36,7 +33,7 @@ function makeAward(overrides = {}) {
 
 describe('karma_init', () => {
   it('load_karma_ini', () => {
-    const plugin = new fixtures.plugin('karma')
+    const plugin = makePlugin('karma', { register: false })
     plugin.inherits('haraka-plugin-redis')
     plugin.load_karma_ini()
     assert.ok(plugin.cfg.asn)
