@@ -34,10 +34,10 @@ jobs:
     permissions:
       contents: read
 
-  windows:
-    uses: haraka/.github/.github/workflows/windows.yml@master
-    permissions:
-      contents: read
+  # windows:
+  #   uses: haraka/.github/.github/workflows/windows.yml@master
+  #   permissions:
+  #     contents: read
 
   macos:
     uses: haraka/.github/.github/workflows/macos.yml@master

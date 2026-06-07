@@ -1042,7 +1042,7 @@ exports.init_ip = async function (dbkey, rip, expire) {
   if (!this.db) return
   await this.db
     .multi()
-    .hmSet(dbkey, { bad: 0, good: 0, connections: 1 })
+    .hSet(dbkey, { bad: 0, good: 0, connections: 1 })
     .expire(dbkey, expire)
     .exec()
 }
@@ -1059,7 +1059,7 @@ exports.init_asn = function (asnkey, expire) {
   if (!this.db) return
   this.db
     .multi()
-    .hmSet(asnkey, { bad: 0, good: 0, connections: 1 })
+    .hSet(asnkey, { bad: 0, good: 0, connections: 1 })
     .expire(asnkey, expire * 2) // keep ASN longer
     .exec()
 }
