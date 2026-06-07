@@ -1,7 +1,15 @@
 'use strict'
 
 const assert = require('node:assert')
-const { describe, it, beforeEach } = require('node:test')
+const {
+  describe,
+  it,
+  before,
+  after,
+  beforeEach,
+  afterEach,
+} = require('node:test')
+const redis = require('redis')
 
 const { Address } = require('@haraka/email-address')
 const { makeConnection, makePlugin, stub } = require('haraka-test-fixtures')
@@ -2077,24 +2085,33 @@ describe('check_asn', () => {
 })
 
 describe('redis helpers', () => {
-  let plugin, connection
-  beforeEach(() => {
-    ;({ plugin, connection } = _set_up())
-    plugin.db = {
-      multi: () => ({
-        hmSet: function () {
-          return this
-        },
-        expire: function () {
-          return this
-        },
-        exec: () => Promise.resolve([]),
-      }),
-    }
+  let plugin, connection, db
+
+  before(async () => {
+    db = redis.createClient()
+    await db.connect()
   })
 
-  it('init_ip executes without error', async () => {
-    await plugin.init_ip('dbkey', '1.2.3.4', 3600)
+  after(async () => {
+    await db.quit()
+  })
+
+  beforeEach(() => {
+    ;({ plugin, connection } = _set_up())
+    plugin.db = db
+  })
+
+  afterEach(async () => {
+    await db.del('karma|test_init_ip', 'as9999')
+  })
+
+  it('init_ip writes hash and sets expiry', async () => {
+    await plugin.init_ip('karma|test_init_ip', '1.2.3.4', 3600)
+    const result = await db.hGetAll('karma|test_init_ip')
+    assert.strictEqual(result.bad, '0')
+    assert.strictEqual(result.good, '0')
+    assert.strictEqual(result.connections, '1')
+    assert.ok((await db.ttl('karma|test_init_ip')) > 0)
   })
 
   it('get_asn_key returns key for configured ASN', () => {
@@ -2122,92 +2139,65 @@ describe('redis helpers', () => {
   })
 
   it('init_asn executes without error', () => {
-    plugin.init_asn('as1234', 3600)
+    plugin.init_asn('as9999', 3600)
   })
 })
 
 describe('ip_history_from_redis', () => {
-  let plugin, connection
-  beforeEach(() => {
+  let plugin, connection, db
+  const dbkey = 'karma|127.0.0.1'
+
+  before(async () => {
+    db = redis.createClient()
+    await db.connect()
+  })
+
+  after(async () => {
+    await db.quit()
+  })
+
+  beforeEach(async () => {
     ;({ plugin, connection } = _set_up())
-    plugin.db = { hGetAll: () => Promise.resolve({}) }
-    plugin.init_ip = () => {}
+    plugin.db = db
+    plugin.cfg.redis = { expire_days: 60 }
+    await db.del(dbkey)
   })
 
   it('inits IP when no history found', async () => {
-    let called = false
-    plugin.init_ip = () => {
-      called = true
-    }
     await new Promise((resolve) =>
       plugin.ip_history_from_redis(resolve, connection),
     )
-    assert.ok(called)
+    const result = await db.hGetAll(dbkey)
+    assert.strictEqual(result.connections, '1')
   })
 
   it('loads good history and sets all_good', async () => {
-    plugin.db.hGetAll = () =>
-      Promise.resolve({ good: 10, bad: 0, connections: 5 })
-    plugin.db.multi = () => ({
-      hIncrBy: function () {
-        return this
-      },
-      expire: function () {
-        return this
-      },
-      exec: () => Promise.resolve([]),
-    })
+    await db.hSet(dbkey, { good: 10, bad: 0, connections: 5 })
     await new Promise((resolve) =>
       plugin.ip_history_from_redis(resolve, connection),
     )
     const r = connection.results.get('karma')
-    assert.strictEqual(r.good, 10)
+    assert.strictEqual(r.good, '10')
     assert.strictEqual(r.history, 10)
-    assert.strictEqual(r.pass[0], 'all_good')
+    assert.ok(r.pass.includes('all_good'))
   })
 
   it('loads bad history and sets all_bad', async () => {
-    plugin.db.hGetAll = () =>
-      Promise.resolve({ good: 0, bad: 10, connections: 5 })
-    plugin.db.multi = () => ({
-      hIncrBy: function () {
-        return this
-      },
-      expire: function () {
-        return this
-      },
-      exec: () => Promise.resolve([]),
-    })
+    await db.hSet(dbkey, { good: 0, bad: 10, connections: 5 })
     await new Promise((resolve) =>
       plugin.ip_history_from_redis(resolve, connection),
     )
-    assert.strictEqual('all_bad', connection.results.get('karma').fail[0])
+    assert.ok(connection.results.get('karma').fail.includes('all_bad'))
   })
 
-  it('handles Redis fetch error gracefully', async () => {
-    plugin.db.hGetAll = () => Promise.reject(new Error('redis error'))
+  it('handles Redis error gracefully', async () => {
+    const badDb = redis.createClient()
+    badDb.on('error', () => {})
+    plugin.db = badDb
     await new Promise((resolve) =>
       plugin.ip_history_from_redis(resolve, connection),
     )
     assert.ok(connection.results.get('karma').err)
-  })
-
-  it('handles multi exec error gracefully', async () => {
-    plugin.db.hGetAll = () =>
-      Promise.resolve({ good: 5, bad: 0, connections: 3 })
-    plugin.db.multi = () => ({
-      hIncrBy: function () {
-        return this
-      },
-      expire: function () {
-        return this
-      },
-      exec: () => Promise.reject(new Error('multi error')),
-    })
-    await new Promise((resolve) =>
-      plugin.ip_history_from_redis(resolve, connection),
-    )
-    // next() was still called; the error is silently captured in results
   })
 
   it('skips when db is unavailable', async () => {

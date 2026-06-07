@@ -4,7 +4,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Unreleased
 
-- test: refactored against test-fixtures 1.7.0
+### [2.5.2] - 2026-06-07
+
+- fix: update redis hmSet -> hSet
+- test: refactored against test-fixtures 1.7.0 (#72)
 
 ### [2.5.1] - 2026-05-24
 
@@ -197,3 +200,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 [2.4.1]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.4.1
 [2.5.0]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.5.0
 [2.5.1]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.5.1
+[2.5.2]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.5.2
