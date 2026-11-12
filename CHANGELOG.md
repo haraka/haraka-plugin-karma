@@ -4,6 +4,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Unreleased
 
+- doc: fix links to other plugins and docs
+
 ### [2.5.2] - 2026-06-07
 
 - fix: update redis hmSet -> hSet
