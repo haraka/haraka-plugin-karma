@@ -578,14 +578,26 @@ exports.hook_reset_transaction = function (next, connection) {
 exports.hook_unrecognized_command = function (next, connection, params) {
   if (this.should_we_skip(connection)) return next()
 
+  const verb = params[0].toUpperCase()
+
   // in case karma is in config/plugins before tls
-  if (params[0].toUpperCase() === 'STARTTLS') return next()
+  if (verb === 'STARTTLS') return next()
 
   // in case karma is in config/plugins before AUTH plugin(s)
   if (connection.notes.authenticating) return next()
 
+  let cmd = params
+  if (verb === 'AUTH') {
+    const method = params[1]?.split(/\s+/)[0] ?? ''
+    // auth_base sets notes.authenticating only after it accepts this first line
+    if (connection.notes.allowed_auth_methods?.includes(method.toUpperCase()))
+      return next()
+    // drop the initial response, it holds the credentials
+    cmd = [params[0], method]
+  }
+
   connection.results.incr(this, { score: -1 })
-  connection.results.add(this, { fail: `cmd:(${params})` })
+  connection.results.add(this, { fail: `cmd:(${cmd})` })
 
   return this.should_we_deny(next, connection, 'unrecognized_command')
 }

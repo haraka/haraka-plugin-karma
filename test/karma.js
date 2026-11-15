@@ -1910,6 +1910,33 @@ describe('hook_unrecognized_command', () => {
     assert.strictEqual(undefined, rc)
   })
 
+  it('AUTH with an offered method is passed through', () => {
+    connection.notes.allowed_auth_methods = ['PLAIN', 'LOGIN']
+    let rc
+    plugin.hook_unrecognized_command(
+      (r) => {
+        rc = r
+      },
+      connection,
+      ['auth', 'plain AHVzZXIAcGFzcw=='],
+    )
+    assert.strictEqual(undefined, rc)
+    assert.strictEqual(undefined, connection.results.store.karma)
+  })
+
+  it('AUTH with a method not offered is penalized without credentials', () => {
+    connection.results.add(plugin, { score: 0 })
+    connection.notes.allowed_auth_methods = ['LOGIN']
+    plugin.hook_unrecognized_command(stub, connection, [
+      'AUTH',
+      'PLAIN AHVzZXIAcGFzcw==',
+    ])
+    assert.strictEqual(-1, connection.results.get('karma').score)
+    assert.deepStrictEqual(connection.results.get('karma').fail, [
+      'cmd:(AUTH,PLAIN)',
+    ])
+  })
+
   it('unknown command is penalized', () => {
     connection.results.add(plugin, { score: 0 })
     plugin.hook_unrecognized_command(stub, connection, ['FROBBLE'])
