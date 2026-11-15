@@ -1937,6 +1937,15 @@ describe('hook_unrecognized_command', () => {
     ])
   })
 
+  it('AUTH without a method is penalized', () => {
+    connection.results.add(plugin, { score: 0 })
+    plugin.hook_unrecognized_command(stub, connection, ['AUTH'])
+    assert.strictEqual(-1, connection.results.get('karma').score)
+    assert.deepStrictEqual(connection.results.get('karma').fail, [
+      'cmd:(AUTH,)',
+    ])
+  })
+
   it('unknown command is penalized', () => {
     connection.results.add(plugin, { score: 0 })
     plugin.hook_unrecognized_command(stub, connection, ['FROBBLE'])
