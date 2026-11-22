@@ -1,6 +1,6 @@
 {
   "name": "haraka-plugin-karma",
-  "version": "2.5.2",
+  "version": "2.5.3",
   "description": "A heuristics scoring and reputation engine for SMTP connections",
   "main": "index.js",
   "files": [
@@ -37,12 +37,12 @@
   "homepage": "https://github.com/haraka/haraka-plugin-karma#readme",
   "dependencies": {
     "haraka-constants": "^1.0.8",
-    "haraka-plugin-redis": "^2.1.0"
+    "haraka-plugin-redis": "^2.1.1"
   },
   "devDependencies": {
-    "@haraka/email-address": "^3.1.6",
+    "@haraka/email-address": "^3.1.7",
     "@haraka/eslint-config": "^3.0.0",
-    "haraka-test-fixtures": "^1.7.1"
+    "haraka-test-fixtures": "^1.7.2"
   },
   "prettier": {
     "singleQuote": true,

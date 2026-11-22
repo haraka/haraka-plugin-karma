@@ -4,6 +4,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Unreleased
 
+### [2.5.3] - 2026-11-21
+
+#### Fixed
+
+- skip AUTH lines the auth plugin handles (#75)
+
+#### Other
+
+- doc: fix links to other plugins and docs (#74)
+
 - doc: fix links to other plugins and docs
 - fix: skip AUTH lines the auth plugin handles
 - fix: don't record AUTH credentials in results
@@ -205,3 +215,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 [2.5.0]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.5.0
 [2.5.1]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.5.1
 [2.5.2]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.5.2
+[2.5.3]: https://github.com/haraka/haraka-plugin-karma/releases/tag/v2.5.3
