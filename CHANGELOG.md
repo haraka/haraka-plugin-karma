@@ -6,17 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### [2.5.3] - 2026-11-21
 
-#### Fixed
-
-- skip AUTH lines the auth plugin handles (#75)
-
-#### Other
-
-- doc: fix links to other plugins and docs (#74)
-
-- doc: fix links to other plugins and docs
-- fix: skip AUTH lines the auth plugin handles
+- fix: skip AUTH lines the auth plugin handles (#75)
 - fix: don't record AUTH credentials in results
+- doc: fix links to other plugins and docs (#74)
 
 ### [2.5.2] - 2026-06-07
 
